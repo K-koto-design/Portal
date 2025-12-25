@@ -14,73 +14,78 @@
             --gray: #8e8e93; --red: #ff3b30; --green: #34c759; --blue-light: #e8f0ff;
         }
 
-        body, html { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); height: 100%; }
-        .refresh-btn { position: fixed; top: 50px; right: 20px; width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; border: none; font-size: 20px; cursor: pointer; }
+        body, html { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); height: 100%; overflow-x: hidden; }
+        
+        /* Экран ПИН-кода Админа */
+        #pin-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background: var(--bg); position: fixed; width: 100%; z-index: 2000; }
+        .pin-input { font-size: 32px; letter-spacing: 15px; text-align: center; border: none; background: none; border-bottom: 2px solid var(--accent); width: 150px; outline: none; margin-bottom: 20px; }
 
-        #login-screen { display: flex; flex-direction: column; justify-content: center; padding: 40px; height: 100vh; box-sizing: border-box; }
-        input, select { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; outline: none; background: white; }
-        .btn { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 600; width: 100%; cursor: pointer; margin-bottom: 10px; }
-        .btn-red { background: var(--red); }
-
-        #main-app { display: none; padding: 20px; }
+        #main-app { display: none; padding: 20px; padding-bottom: 100px; }
+        
         .header { background: var(--card); padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .total-sum { font-size: 28px; font-weight: 800; color: var(--accent); }
-        
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
         .tab { background: #e5e5ea; padding: 10px 20px; border-radius: 20px; font-size: 14px; white-space: nowrap; cursor: pointer; }
         .tab.active { background: var(--accent); color: white; }
 
-        .item-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid #e5e5ea; position: relative; }
-        .status { font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; }
-        .status-debt { background: #ffebeb; color: var(--red); }
-        .status-ok { background: #e8f9ed; color: var(--green); }
-        .status-frozen { background: #f2f2f7; color: var(--gray); text-decoration: line-through; }
+        .item-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid #e5e5ea; cursor: pointer; transition: 0.2s; }
         
-        .action-btns { float: right; display: flex; flex-direction: column; gap: 5px; }
-        .small-btn { padding: 6px 10px; border-radius: 8px; border: none; font-size: 10px; font-weight: bold; cursor: pointer; text-align: center; }
-        .btn-freeze { background: #fef1f1; color: var(--red); }
-        .btn-unfreeze { background: var(--blue-light); color: var(--accent); }
-        .btn-del { background: #eee; color: #555; }
+        /* Модальное окно */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: flex-end; }
+        .modal-content { background: white; width: 100%; border-top-left-radius: 30px; border-top-right-radius: 30px; padding: 25px; box-sizing: border-box; max-height: 90vh; overflow-y: auto; }
+        .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f2f2f7; }
+        .detail-label { color: var(--gray); font-size: 14px; }
+        .detail-value { font-weight: 600; font-size: 15px; }
 
-        .admin-form { background: white; padding: 20px; border-radius: 20px; margin-bottom: 20px; border: 1px solid var(--accent); }
-        footer { text-align: center; font-size: 10px; color: var(--gray); margin-top: 20px; padding-bottom: 20px; }
+        input, select { width: 100%; padding: 15px; margin-bottom: 12px; border-radius: 12px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; outline: none; background: white; }
+        .btn { background: var(--accent); color: white; border: none; padding: 16px; border-radius: 14px; font-weight: 600; width: 100%; cursor: pointer; }
+        
+        .close-modal { background: #f2f2f7; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; float: right; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <button class="refresh-btn" onclick="hardReset()">🔄</button>
-
-    <div id="login-screen">
-        <h1 style="text-align:center;">Вход в систему</h1>
-        <input type="text" id="username" placeholder="Логин">
-        <input type="password" id="password" placeholder="Пароль">
-        <button class="btn" onclick="tryLogin()">Войти</button>
-        <p id="error" style="color:red; text-align:center; display:none;">Ошибка доступа</p>
+    <div id="pin-screen">
+        <div style="font-size: 50px; margin-bottom: 10px;">🛡️</div>
+        <h3>Вход в панель</h3>
+        <input type="password" id="pin-input" class="pin-input" maxlength="4" inputmode="numeric">
+        <button class="btn" style="width: 200px;" onclick="checkPin()">Войти</button>
     </div>
 
     <div id="main-app">
         <div class="header">
-            <div style="font-size: 12px; color: var(--gray); text-transform: uppercase;">Общая сумма активов</div>
+            <div style="font-size: 12px; color: var(--gray); text-transform: uppercase;">Общий баланс системы</div>
             <div class="total-sum" id="total-display">0 ₽</div>
         </div>
 
         <div class="tabs">
             <div class="tab active" onclick="showTab('clients', this)">Клиенты</div>
-            <div class="tab" onclick="showTab('loans', this)">Обязательства</div>
-            <div class="tab" onclick="showTab('freeze', this)">⚙️ Управление</div>
             <div class="tab" onclick="showTab('admin', this)">➕ Добавить</div>
+            <div class="tab" onclick="showTab('freeze', this)">⚙️ Управление</div>
         </div>
 
         <div id="content-area"></div>
-        
-        <footer>
-            Система: WebApp-B7149<br>
-            Облачная база: Firebase Realtime
-        </footer>
+    </div>
+
+    <div id="detail-modal" class="modal" onclick="closeDetails(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="close-modal" onclick="document.getElementById('detail-modal').style.display='none'">✕</div>
+            <h2 id="m-name" style="margin-top: 0;">ФИО</h2>
+            <div id="m-id" style="color: var(--gray); font-size: 12px; margin-bottom: 20px;">ID: 0000</div>
+            
+            <div class="detail-row"><span class="detail-label">Статус</span><span class="detail-value" id="m-type" style="color: var(--accent)">-</span></div>
+            <div class="detail-row"><span class="detail-label">Баланс</span><span class="detail-value" id="m-balance">0 ₽</span></div>
+            <div class="detail-row"><span class="detail-label">Бонусы</span><span class="detail-value" id="m-bonuses" style="color: var(--green)">0 Б</span></div>
+            <div class="detail-row"><span class="detail-label">Потрачено за месяц</span><span class="detail-value" id="m-spent">0 ₽</span></div>
+            <div class="detail-row"><span class="detail-label">Копилок</span><span class="detail-value" id="m-piggy">0</span></div>
+            
+            <br>
+            <button class="btn" style="background: #f2f2f7; color: #1c1c1e;" onclick="document.getElementById('detail-modal').style.display='none'">Закрыть</button>
+        </div>
     </div>
 
     <script>
-        // --- КОНФИГУРАЦИЯ FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyA3J7KnUgxUHZigwRKmndm7xyxJeeLCrxg",
             authDomain: "webapp-b7149.firebaseapp.com",
@@ -94,143 +99,129 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const clientsRef = db.ref('clients');
-
         let localClients = [];
 
-        // --- ЛОГИКА ---
-
-        function hardReset() { location.reload(); }
-
-        // Получение данных в реальном времени
-        clientsRef.on('value', (snapshot) => {
-            const val = snapshot.val();
-            localClients = val ? Object.keys(val).map(key => ({...val[key], fbKey: key})) : [];
-            updateUI();
-        });
-
-        function updateUI() {
-            const activeTab = document.querySelector('.tab.active');
-            if (activeTab) {
-                // Имитируем клик для обновления текущего вида
-                const type = activeTab.getAttribute('onclick').match(/'([^']+)'/)[1];
-                renderContent(type);
+        function checkPin() {
+            if (document.getElementById('pin-input').value === "1234") {
+                document.getElementById('pin-screen').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                loadData();
+            } else {
+                alert("Неверный ПИН");
             }
-            
-            const total = localClients.reduce((acc, c) => acc + (Number(c.loan) || 0), 0);
-            document.getElementById('total-display').innerText = total.toLocaleString() + " ₽";
         }
 
-        function tryLogin() {
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
-            if (u === "Admin" && p === "45621") {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-app').style.display = 'block';
-                showTab('clients', document.querySelector('.tab'));
-            } else {
-                document.getElementById('error').style.display = 'block';
-            }
+        function loadData() {
+            clientsRef.on('value', (snapshot) => {
+                const val = snapshot.val();
+                localClients = val ? Object.keys(val).map(key => ({...val[key], fbKey: key})) : [];
+                updateUI();
+            });
+        }
+
+        function updateUI() {
+            const total = localClients.reduce((acc, c) => acc + (Number(c.balance) || 0), 0);
+            document.getElementById('total-display').innerText = total.toLocaleString() + " ₽";
+            renderCurrentTab();
         }
 
         function addNewClient() {
             const name = document.getElementById('new-name').value;
             const phone = document.getElementById('new-phone').value;
-            const loan = document.getElementById('new-loan').value;
-            const status = document.getElementById('new-status').value;
+            const orgType = document.getElementById('new-type').value;
+            const balance = document.getElementById('new-balance').value;
+            const bonuses = document.getElementById('new-bonuses').value;
+            const clientPin = document.getElementById('new-client-pin').value;
 
-            if(!name || !phone) return alert("Заполните имя и телефон");
+            if(!name || !phone || !clientPin) return alert("Заполните ФИО, Телефон и ПИН клиента!");
+
+            const newId = Math.floor(1000 + Math.random() * 9000);
 
             clientsRef.push({
-                name, phone, 
-                loan: Number(loan) || 0, 
-                status: status,
-                frozen: false,
-                card: "МИР *" + Math.floor(1000 + Math.random() * 9000)
+                id: newId,
+                name, phone, orgType,
+                balance: Number(balance) || 0,
+                bonuses: Number(bonuses) || 0,
+                clientPin: clientPin, // Сохраняем ПИН клиента
+                spentMonth: 0,
+                piggyBanks: 0,
+                frozen: false
             });
 
-            alert("Клиент добавлен в базу!");
+            alert("Клиент добавлен!");
             showTab('clients', document.querySelectorAll('.tab')[0]);
         }
 
-        function toggleFreeze(fbKey, currentStatus) {
-            db.ref('clients/' + fbKey).update({ frozen: !currentStatus });
+        function openDetails(key) {
+            const c = localClients.find(item => item.fbKey === key);
+            if(!c) return;
+
+            document.getElementById('m-name').innerText = c.name;
+            document.getElementById('m-id').innerText = "ID: " + (c.id || "0000");
+            document.getElementById('m-type').innerText = c.orgType; // Отображаем ИП / Не ИП
+            document.getElementById('m-balance').innerText = (c.balance || 0).toLocaleString() + " ₽";
+            document.getElementById('m-bonuses').innerText = (c.bonuses || 0).toLocaleString() + " Б";
+            document.getElementById('m-spent').innerText = (c.spentMonth || 0).toLocaleString() + " ₽";
+            document.getElementById('m-piggy').innerText = c.piggyBanks || 0;
+            
+            document.getElementById('detail-modal').style.display = 'flex';
         }
 
-        function deleteClient(fbKey, name) {
-            if(confirm(`Удалить клиента ${name} навсегда?`)) {
-                db.ref('clients/' + fbKey).remove();
-            }
+        function closeDetails(e) {
+            if(e.target.id === 'detail-modal') document.getElementById('detail-modal').style.display = 'none';
         }
 
         function showTab(type, el) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             el.classList.add('active');
-            renderContent(type);
+            renderCurrentTab();
         }
 
-        function renderContent(type) {
-            let html = '';
+        function renderCurrentTab() {
+            const activeTab = document.querySelector('.tab.active');
+            if(!activeTab) return;
+            const type = activeTab.getAttribute('onclick').match(/'([^']+)'/)[1];
             const container = document.getElementById('content-area');
+            let html = '';
 
             if (type === 'clients') {
                 localClients.forEach(c => {
-                    const sClass = c.frozen ? "status-frozen" : (c.status === "Задолженность" ? "status-debt" : "status-ok");
                     html += `
-                        <div class="item-card" style="opacity: ${c.frozen ? '0.6' : '1'}">
-                            <b>${c.name} ${c.frozen ? '❄️' : ''}</b><br>
-                            <span style="font-size:13px; color:gray">${c.phone}</span><br>
-                            <span class="status ${sClass}">${c.frozen ? 'ЗАБЛОКИРОВАН' : c.status}</span>
-                            <div style="font-size:11px; color:gray; margin-top:5px;">Карта: ${c.card}</div>
+                        <div class="item-card" onclick="openDetails('${c.fbKey}')">
+                            <span style="float:right; color:var(--accent); font-weight:bold">${c.balance.toLocaleString()} ₽</span>
+                            <b>${c.name}</b><br>
+                            <span style="font-size:12px; color:gray">${c.phone}</span><br>
+                            <span style="font-size:11px; color:var(--accent); font-weight:600">${c.orgType}</span>
                         </div>`;
                 });
-            } 
-            
-            else if (type === 'loans') {
-                const debtors = localClients.filter(c => c.loan > 0);
-                if(debtors.length === 0) html = '<p style="text-align:center; color:gray;">Активных долгов нет</p>';
-                debtors.forEach(c => {
-                    html += `
-                        <div class="item-card">
-                            <div style="font-size:12px; color:gray">Держатель:</div>
-                            <div>${c.name}</div>
-                            <div style="font-weight:bold; color:var(--accent); margin-top:5px">${c.loan.toLocaleString()} ₽</div>
-                        </div>`;
-                });
-            }
-
-            else if (type === 'freeze') {
+            } else if (type === 'admin') {
+                html = `
+                    <div style="background:white; padding:20px; border-radius:20px;">
+                        <h3 style="margin-top:0">Новый клиент</h3>
+                        <input type="text" id="new-name" placeholder="ФИО">
+                        <input type="text" id="new-phone" placeholder="Номер телефона">
+                        <select id="new-type">
+                            <option value="ИП">Статус: ИП</option>
+                            <option value="Не ИП">Статус: Не ИП</option>
+                        </select>
+                        <input type="number" id="new-balance" placeholder="Баланс (₽)">
+                        <input type="number" id="new-bonuses" placeholder="Бонусы">
+                        <input type="password" id="new-client-pin" placeholder="ПИН-КОД КЛИЕНТА" style="border: 2px solid var(--accent)">
+                        <button class="btn" onclick="addNewClient()">СОХРАНИТЬ В FIREBASE</button>
+                    </div>`;
+            } else if (type === 'freeze') {
                 localClients.forEach(c => {
                     html += `
                         <div class="item-card">
-                            <div class="action-btns">
-                                <button class="small-btn ${c.frozen ? 'btn-unfreeze' : 'btn-freeze'}" 
-                                    onclick="toggleFreeze('${c.fbKey}', ${c.frozen})">
-                                    ${c.frozen ? 'РАЗМОРОЗИТЬ' : 'ЗАМОРОЗИТЬ'}
-                                </button>
-                                <button class="small-btn btn-del" onclick="deleteClient('${c.fbKey}', '${c.name}')">УДАЛИТЬ</button>
-                            </div>
+                            <button class="btn" style="width:auto; float:right; padding:8px 12px; font-size:12px; background:${c.frozen ? 'var(--green)' : 'var(--red)'}" 
+                                onclick="db.ref('clients/${c.fbKey}').update({frozen: !${c.frozen}})">
+                                ${c.frozen ? 'РАЗБЛОК' : 'ЗАБЛОК'}
+                            </button>
                             <b>${c.name}</b><br>
-                            <span style="font-size:12px; color:gray">${c.phone}</span>
+                            <span style="font-size:12px; color:gray">ID: ${c.id} | PIN: ${c.clientPin}</span>
                         </div>`;
                 });
             }
-
-            else if (type === 'admin') {
-                html = `
-                    <div class="admin-form">
-                        <h3 style="margin-top:0">Новый клиент</h3>
-                        <input type="text" id="new-name" placeholder="ФИО">
-                        <input type="text" id="new-phone" placeholder="+7 (___) ___-__-__">
-                        <input type="number" id="new-loan" placeholder="Сумма долга (если есть)">
-                        <select id="new-status">
-                            <option value="Обычно">Статус: Обычно</option>
-                            <option value="Задолженность">Статус: Задолженность</option>
-                        </select>
-                        <button class="btn" onclick="addNewClient()">СОХРАНИТЬ В FIREBASE</button>
-                    </div>
-                `;
-            }
-
             container.innerHTML = html;
         }
     </script>
