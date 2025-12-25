@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Рабочий Портал</title>
+    <title>Рабочий Портал PRO</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,43 +20,52 @@
             --gray: #8e8e93;
             --red: #ff3b30;
             --green: #34c759;
+            --blue-light: #e8f0ff;
         }
 
         body, html { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); height: 100%; }
 
-        /* ЭКРАН УСТАНОВКИ (iOS) */
+        .refresh-btn { position: fixed; top: 50px; right: 20px; width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; border: none; font-size: 20px; cursor: pointer; }
+
         #ios-lock { display: none; padding: 40px 20px; text-align: center; }
         .setup-card { background: white; border-radius: 20px; padding: 20px; text-align: left; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 20px; }
         
-        /* ЭКРАН ВХОДА */
         #login-screen { display: flex; flex-direction: column; justify-content: center; padding: 40px; height: 100vh; box-sizing: border-box; }
         input { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; outline: none; }
         .btn { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 600; width: 100%; cursor: pointer; }
 
-        /* ГЛАВНЫЙ ИНТЕРФЕЙС */
         #main-app { display: none; padding: 20px; }
         .header { background: var(--card); padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .total-sum { font-size: 28px; font-weight: 800; color: var(--accent); }
         
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-        .tab { background: #e5e5ea; padding: 10px 20px; border-radius: 20px; font-size: 14px; white-space: nowrap; cursor: pointer; }
+        .tab { background: #e5e5ea; padding: 10px 20px; border-radius: 20px; font-size: 14px; white-space: nowrap; cursor: pointer; transition: 0.2s; }
         .tab.active { background: var(--accent); color: white; }
 
-        .item-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid #e5e5ea; }
+        .item-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid #e5e5ea; position: relative; }
         .status { font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; }
         .status-debt { background: #ffebeb; color: var(--red); }
         .status-ok { background: #e8f9ed; color: var(--green); }
+        .status-frozen { background: #f2f2f7; color: var(--gray); text-decoration: line-through; }
         .val { font-weight: bold; color: var(--accent); }
+
+        .freeze-btn { float: right; padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .btn-freeze { background: #fef1f1; color: var(--red); }
+        .btn-unfreeze { background: var(--blue-light); color: var(--accent); }
+
+        footer { text-align: center; font-size: 10px; color: var(--gray); margin-top: 20px; padding-bottom: 20px; }
     </style>
 </head>
 <body>
+
+    <button class="refresh-btn" onclick="hardReset()">🔄</button>
 
     <div id="ios-lock">
         <div style="font-size: 50px;">📲</div>
         <h2>Доступ ограничен</h2>
         <p>Для работы на iPhone добавьте сервис на экран Домой.</p>
         <div class="setup-card">
-            <p>1. Нажмите кнопку <b>«Поделиться»</b> (квадрат со стрелкой).</p>
+            <p>1. Нажмите кнопку <b>«Поделиться»</b>.</p>
             <p>2. Выберите <b>«На экран „Домой“»</b>.</p>
             <p>3. Запустите появившееся приложение.</p>
         </div>
@@ -73,51 +82,82 @@
     <div id="main-app">
         <div class="header">
             <div style="font-size: 12px; color: var(--gray); text-transform: uppercase;">Общая сумма активов</div>
-            <div class="total-sum" id="total-display">1 000 005 ₽</div>
+            <div class="total-sum" id="total-display">0 ₽</div>
         </div>
 
         <div class="tabs">
             <div class="tab active" onclick="showTab('clients', this)">Клиенты</div>
             <div class="tab" onclick="showTab('loans', this)">Обязательства</div>
             <div class="tab" onclick="showTab('assets', this)">Реестр карт</div>
+            <div class="tab" onclick="showTab('freeze', this)">❄️ Заморозка</div>
         </div>
 
         <div id="content-area"></div>
+        
+        <footer>
+            Версия системы: 4.2.1 (Persistent)<br>
+            Данные сохраняются локально
+        </footer>
     </div>
 
     <script>
-        // ДАННЫЕ ДЛЯ РЕДАКТИРОВАНИЯ
+        // --- КОНФИГ И СОХРАНЕНИЕ ---
+        const APP_VERSION = "4.2.1";
+        const STORAGE_KEY = "portal_frozen_clients";
+
+        function hardReset() {
+            const url = new URL(window.location.href);
+            url.searchParams.set('reload', Date.now());
+            window.location.replace(url.toString());
+        }
+
         const data = {
             clients: [
-                { name: "Артём", phone: "+7 (911) 796-15-22", status: "Обычно" },
-                { name: "Даня", phone: "+381 (000) 382-75-02", status: "Обычно" },
-                { name: "Матвей", phone: "+7 (901) 736-24-15", status: "Обычно" },
-                { name: "Святослав", phone: "+375 (529) 888-00-88", status: "Обычно" },
-                { name: "Роман", phone: "+7 (906) 235-74-33", status: "Обычно" },
-                { name: "Михаил", phone: "+7 (999) 000-11-22", status: "Обычно" },
-                { name: "Артём", phone: "+7 (890) 763-18-90", status: "Обычно" },
-                { name: "Алексей", phone: "+7 (999) 000-11-22", status: "Обычно" },
-                { name: "Тимофей", phone: "+7 (902) 871-61-09", status: "Обычно" }
+                { id: 1, name: "Артём", phone: "+7 (911) 796-15-22", status: "Обычно", frozen: false },
+                { id: 2, name: "Даня", phone: "+381 (000) 382-75-02", status: "Обычно", frozen: false },
+                { id: 3, name: "Матвей", phone: "+7 (901) 736-24-15", status: "Обычно", frozen: false },
+                { id: 4, name: "Святослав", phone: "+375 (529) 888-00-88", status: "Обычно", frozen: false },
+                { id: 5, name: "Роман", phone: "+7 (906) 235-74-33", status: "Обычно", frozen: false },
+                { id: 6, name: "Михаил", phone: "+7 (999) 000-11-22", status: "Обычно", frozen: false },
+                { id: 7, name: "Артём", phone: "+7 (890) 763-18-90", status: "Обычно", frozen: false },
+                { id: 8, name: "Алексей", phone: "+7 (999) 000-11-22", status: "Обычно", frozen: false },
+                { id: 9, name: "Тимофей", phone: "+7 (902) 871-61-09", status: "Обычно", frozen: false }
             ],
-            loans: [
-                { holder: "Михаил", amount: 4286 },
-            ],
+            loans: [{ holder: "Михаил", amount: 4286 }],
             cards: [
-                { type: "МИР *4152", holder: "Артём" },
-                { type: "МИР *0102", holder: "Даня" },
-                { type: "МИР *3321", holder: "Матвей" },
-                { type: "МИР *5642", holder: "Святослав" },
-                { type: "МИР *2212", holder: "Роман" },
-                { type: "МИР *4856", holder: "Михаил" },
-                { type: "МИР *8732", holder: "Артём" },
-                { type: "МИР *9001", holder: "Алексей" },
-                { type: "МИР *5673", holder: "Тимофей" },
+                { id: 1, type: "МИР *4152", holder: "Артём" },
+                { id: 2, type: "МИР *0102", holder: "Даня" },
+                { id: 3, type: "МИР *3321", holder: "Матвей" },
+                { id: 4, type: "МИР *5642", holder: "Святослав" },
+                { id: 5, type: "МИР *2212", holder: "Роман" },
+                { id: 6, type: "МИР *4856", holder: "Михаил" },
+                { id: 7, type: "МИР *8732", holder: "Артём" },
+                { id: 8, type: "МИР *9001", holder: "Алексей" },
+                { id: 9, type: "МИР *5673", holder: "Тимофей" },
             ]
         };
 
-        // Рассчет общей суммы (например, сумма всех обязательств/кредитов)
-        const totalSum = data.loans.reduce((acc, curr) => acc + curr.amount, 0);
-        document.getElementById('total-display').innerText = totalSum.toLocaleString() + " ₽";
+        // ЗАГРУЗКА СОСТОЯНИЯ ИЗ ПАМЯТИ
+        function loadFrozenState() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const frozenIds = JSON.parse(saved);
+                data.clients.forEach(c => {
+                    if (frozenIds.includes(c.id)) c.frozen = true;
+                });
+            }
+        }
+
+        // СОХРАНЕНИЕ СОСТОЯНИЯ В ПАМЯТЬ
+        function saveFrozenState() {
+            const frozenIds = data.clients.filter(c => c.frozen).map(c => c.id);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(frozenIds));
+        }
+
+        function updateSum() {
+            const totalSum = data.loans.reduce((acc, curr) => acc + curr.amount, 0);
+            document.getElementById('total-display').innerText = totalSum.toLocaleString() + " ₽";
+        }
 
         function tryLogin() {
             const u = document.getElementById('username').value;
@@ -125,9 +165,19 @@
             if (u === "Admin" && p === "45621") {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-app').style.display = 'block';
+                updateSum();
                 showTab('clients', document.querySelector('.tab'));
             } else {
                 document.getElementById('error').style.display = 'block';
+            }
+        }
+
+        function toggleFreeze(id) {
+            const client = data.clients.find(c => c.id === id);
+            if(client) {
+                client.frozen = !client.frozen;
+                saveFrozenState(); // Сохраняем сразу после изменения
+                showTab('freeze', document.querySelectorAll('.tab')[3]);
             }
         }
 
@@ -138,11 +188,12 @@
             let html = '';
             if (type === 'clients') {
                 data.clients.forEach(c => {
-                    const sClass = c.status === "Задолженность" ? "status-debt" : "status-ok";
-                    html += `<div class="item-card">
-                        <b>${c.name}</b><br>
+                    const isFrozen = c.frozen;
+                    const sClass = isFrozen ? "status-frozen" : (c.status === "Задолженность" ? "status-debt" : "status-ok");
+                    html += `<div class="item-card" style="opacity: ${isFrozen ? '0.6' : '1'}">
+                        <b>${c.name} ${isFrozen ? '❄️' : ''}</b><br>
                         <span style="font-size:13px; color:gray">${c.phone}</span><br>
-                        <span class="status ${sClass}">${c.status}</span>
+                        <span class="status ${sClass}">${isFrozen ? 'ЗАБЛОКИРОВАН' : c.status}</span>
                     </div>`;
                 });
             } else if (type === 'loans') {
@@ -155,27 +206,43 @@
                 });
             } else if (type === 'assets') {
                 data.cards.forEach(card => {
-                    html += `<div class="item-card">
-                        <b>${card.type}</b><br>
+                    const client = data.clients.find(c => c.name === card.holder);
+                    const isFrozen = client ? client.frozen : false;
+                    html += `<div class="item-card" style="opacity: ${isFrozen ? '0.5' : '1'}">
+                        <b>${card.type}</b> ${isFrozen ? '🔴' : '🟢'}<br>
                         <div style="font-size:13px; color:gray">Держатель: ${card.holder}</div>
+                        <div style="font-size:11px; color:${isFrozen ? 'red' : 'green'}">${isFrozen ? 'Карта неактивна' : 'Карта активна'}</div>
+                    </div>`;
+                });
+            } else if (type === 'freeze') {
+                html += '<p style="font-size:12px; color:gray; margin-left:5px;">Управление доступом к счетам:</p>';
+                data.clients.forEach(c => {
+                    html += `<div class="item-card">
+                        <button class="freeze-btn ${c.frozen ? 'btn-unfreeze' : 'btn-freeze'}" onclick="toggleFreeze(${c.id})">
+                            ${c.frozen ? 'РАЗМОРОЗИТЬ' : 'ЗАМОРОЗИТЬ'}
+                        </button>
+                        <b>${c.name}</b><br>
+                        <span style="font-size:12px; color:gray">ID: 00${c.id}</span>
                     </div>`;
                 });
             }
             document.getElementById('content-area').innerHTML = html;
         }
 
-        // Проверка устройства и режима запуска
-        function checkDevice() {
+        function init() {
+            loadFrozenState(); // Загружаем блокировки из памяти
+
             const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
             const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
             if (isIOS && !isStandalone) {
                 document.getElementById('ios-lock').style.display = 'block';
                 document.getElementById('login-screen').style.display = 'none';
+                document.querySelector('.refresh-btn').style.display = 'none';
             }
         }
 
-        window.onload = checkDevice;
+        window.onload = init;
     </script>
 </body>
 </html>
