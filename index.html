@@ -2,47 +2,161 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Админ-Панель Банка</title>
+    <title>Staff Panel — Управление</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
-        :root { --primary: #007aff; --red: #ff3b30; --bg: #f2f2f7; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
-        .admin-container { max-width: 800px; margin: 0 auto; }
-        .search-box { margin-bottom: 20px; }
-        input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
-        
-        .client-card { 
-            background: white; border-radius: 15px; padding: 20px; margin-bottom: 15px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 2px solid transparent;
+        :root {
+            --primary: #007aff;
+            --success: #34c759;
+            --warning: #ff9500;
+            --danger: #ff3b30;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #1c1c1e;
+            --text-sec: #8e8e93;
         }
-        .client-card.frozen { border-color: var(--red); background: #fff5f5; }
-        
-        .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .badge { background: #000; color: #fff; padding: 2px 8px; border-radius: 5px; font-size: 12px; }
-        
-        .edit-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .field-group { display: flex; flex-direction: column; }
-        .field-group label { font-size: 11px; color: #888; margin-bottom: 4px; }
-        .edit-fields input { padding: 8px; font-size: 14px; }
 
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; }
-        .btn-save { background: var(--primary); color: white; }
-        .btn-freeze { background: var(--red); color: white; }
-        .btn-unfreeze { background: #34c759; color: white; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; }
+
+        /* HEADER & FORMS */
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         
-        h1 { font-size: 24px; }
+        .add-box {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        input, select {
+            padding: 12px 16px;
+            border: 1px solid #e5e5ea;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        input:focus { border-color: var(--primary); }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-main { background: var(--primary); color: white; }
+        .btn-main:hover { background: #0056b3; }
+
+        /* SEARCH */
+        .search-bar { margin-bottom: 20px; position: relative; }
+        .search-bar input { width: 100%; padding-left: 45px; height: 50px; background: white; }
+
+        /* CLIENT LIST */
+        .client-card {
+            background: var(--card-bg);
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+            cursor: pointer;
+            transition: transform 0.2s;
+            border-left: 5px solid var(--primary);
+        }
+        .client-card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
+        .client-card.frozen { border-left-color: var(--danger); }
+        .client-card.is-ip { border-left-color: #000; }
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; }
+        .info-main strong { font-size: 18px; display: block; }
+        .info-main span { color: var(--text-sec); font-size: 13px; }
+
+        .badge-ip {
+            background: #000;
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+
+        /* DETAILS (HIDDEN BY DEFAULT) */
+        .details {
+            display: none;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #f2f2f7;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-box { background: #f9f9fb; padding: 15px; border-radius: 12px; }
+        .stat-box label { font-size: 11px; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-box .val { font-size: 16px; font-weight: 700; margin-top: 5px; display: block; }
+
+        .actions { display: flex; gap: 10px; margin-top: 20px; }
+        
+        .btn-freeze { background: #fff1f0; color: var(--danger); }
+        .btn-unfreeze { background: #f6ffed; color: var(--success); }
+        .btn-save { background: var(--primary); color: white; width: 100%; margin-top: 10px; }
+
+        .history-mini { font-size: 12px; max-height: 100px; overflow-y: auto; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
     </style>
 </head>
 <body>
 
-<div class="admin-container">
-    <h1>Управление клиентами</h1>
-    
-    <div class="search-box">
-        <input type="text" id="adminSearch" placeholder="Поиск по имени, тел или названию ИП..." oninput="renderAdminList()">
+<div class="container">
+    <header>
+        <h1>Сотрудник: Управление БД</h1>
+        <div id="status-fb" style="font-size: 12px; color: var(--success);">● Система онлайн</div>
+    </header>
+
+    <div class="add-box">
+        <h3 style="margin:0">Добавить нового участника</h3>
+        <div class="form-grid">
+            <select id="newType">
+                <option value="Клиент">Обычный клиент</option>
+                <option value="ИП">Компания (ИП)</option>
+            </select>
+            <input type="text" id="newName" placeholder="ФИО или Название компании">
+            <input type="text" id="newPhone" placeholder="Номер телефона">
+            <input type="text" id="newPin" placeholder="ПИН-код (4 знака)">
+            <input type="number" id="newBalance" placeholder="Начальный баланс">
+            <button class="btn btn-main" onclick="addClient()">Создать аккаунт</button>
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" id="adminSearch" placeholder="Поиск по базе данных..." oninput="renderAdminList()">
     </div>
 
     <div id="admin-list">
@@ -50,7 +164,7 @@
 </div>
 
 <script>
-    // Тот же конфиг, что и в приложении
+    // Конфигурация Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyA3J7KnUgxUHZigwRKmndm7xyxJeeLCrxg",
         authDomain: "webapp-b7149.firebaseapp.com",
@@ -66,13 +180,43 @@
 
     let allClients = [];
 
-    // Загрузка данных
+    // Загрузка
     dbRef.on('value', (snapshot) => {
         const data = snapshot.val();
         allClients = data ? Object.keys(data).map(key => ({...data[key], fbKey: key})) : [];
         renderAdminList();
     });
 
+    // Добавление
+    function addClient() {
+        const name = document.getElementById('newName').value;
+        const phone = document.getElementById('newPhone').value;
+        const pin = document.getElementById('newPin').value;
+        const balance = document.getElementById('newBalance').value;
+        const type = document.getElementById('newType').value;
+
+        if(!name || !phone || !pin) return alert("Заполните основные поля!");
+
+        const newClient = {
+            name: name,
+            phone: phone,
+            clientPin: pin,
+            balance: Number(balance) || 0,
+            orgType: type,
+            frozen: false,
+            bonuses: 0,
+            creditLimit: 0,
+            history: [{t: "Открытие счета", a: Number(balance) || 0}],
+            piggies: []
+        };
+
+        dbRef.push(newClient).then(() => {
+            alert("Успешно создано!");
+            document.querySelectorAll('.add-box input').forEach(i => i.value = '');
+        });
+    }
+
+    // Рендер списка
     function renderAdminList() {
         const query = document.getElementById('adminSearch').value.toLowerCase();
         const container = document.getElementById('admin-list');
@@ -84,72 +228,83 @@
 
         filtered.forEach(c => {
             const isFrozen = c.frozen === true;
+            const isIP = c.orgType === 'ИП';
             const card = document.createElement('div');
-            card.className = `client-card ${isFrozen ? 'frozen' : ''}`;
+            card.className = `client-card ${isFrozen ? 'frozen' : ''} ${isIP ? 'is-ip' : ''}`;
             
             card.innerHTML = `
-                <div class="row">
-                    <div>
-                        <strong>${c.name}</strong> 
-                        ${c.orgType === 'ИП' ? '<span class="badge">ИП</span>' : ''}
-                    </div>
-                    <div style="font-size: 12px; color: ${isFrozen ? 'red' : 'green'}">
-                        ${isFrozen ? 'ЗАБЛОКИРОВАН' : 'АКТИВЕН'}
-                    </div>
-                </div>
-                
-                <div class="edit-fields">
-                    <div class="field-group">
-                        <label>Баланс (₽)</label>
-                        <input type="number" id="bal-${c.fbKey}" value="${c.balance || 0}">
-                    </div>
-                    <div class="field-group">
-                        <label>Кредитный лимит (₽)</label>
-                        <input type="number" id="cred-${c.fbKey}" value="${c.creditLimit || 0}">
-                    </div>
-                    <div class="field-group">
-                        <label>Телефон</label>
-                        <input type="text" id="phone-${c.fbKey}" value="${c.phone || ''}">
-                    </div>
-                    <div class="field-group">
-                        <label>ПИН-код</label>
-                        <input type="text" id="pin-${c.fbKey}" value="${c.clientPin || ''}">
+                <div onclick="toggleDetails('${c.fbKey}')">
+                    <div class="card-header">
+                        <div class="info-main">
+                            <strong>${c.name} ${isIP ? '<span class="badge-ip">ИП</span>' : ''}</strong>
+                            <span>Тел: ${c.phone || 'не привязан'} | ПИН: ${c.clientPin}</span>
+                        </div>
+                        <div style="text-align: right">
+                            <div style="font-weight:800">${(c.balance || 0).toLocaleString()} ₽</div>
+                            <small style="color:${isFrozen ? 'red' : 'green'}">${isFrozen ? 'ЗАБЛОКИРОВАН' : 'АКТИВЕН'}</small>
+                        </div>
                     </div>
                 </div>
 
-                <div class="btn-group">
-                    <button class="btn-save" onclick="saveClient('${c.fbKey}')">Сохранить</button>
-                    <button class="${isFrozen ? 'btn-unfreeze' : 'btn-freeze'}" onclick="toggleFreeze('${c.fbKey}', ${isFrozen})">
-                        ${isFrozen ? 'Разморозить' : 'Заморозить счет'}
-                    </button>
+                <div class="details" id="det-${c.fbKey}">
+                    <div class="details-grid">
+                        <div class="stat-box">
+                            <label>Управление балансом</label>
+                            <input type="number" id="bal-${c.fbKey}" value="${c.balance}">
+                            <label style="margin-top:10px; display:block">Бонусы</label>
+                            <input type="number" id="bon-${c.fbKey}" value="${c.bonuses || 0}">
+                            <button class="btn btn-save" onclick="saveClient('${c.fbKey}')">Обновить данные</button>
+                        </div>
+
+                        <div class="stat-box">
+                            <label>Копилки</label>
+                            <div class="history-mini">
+                                ${c.piggies ? c.piggies.map(p => `<div>${p.target}₽ (Собрано: ${p.current}₽)</div>`).join('') : 'Нет копилок'}
+                            </div>
+                            <label style="margin-top:10px; display:block">Кредитный лимит</label>
+                            <input type="number" id="cred-${c.fbKey}" value="${c.creditLimit || 0}">
+                        </div>
+
+                        <div class="stat-box">
+                            <label>История операций (последние 5)</label>
+                            <div class="history-mini">
+                                ${c.history ? c.history.slice(-5).reverse().map(h => `<div>${h.t}: <b>${h.a}₽</b></div>`).join('') : 'История пуста'}
+                            </div>
+                            <div class="actions">
+                                <button class="btn ${isFrozen ? 'btn-unfreeze' : 'btn-freeze'}" onclick="toggleFreeze('${c.fbKey}', ${isFrozen})">
+                                    ${isFrozen ? 'Разблокировать' : 'Заблокировать карту'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
             container.appendChild(card);
         });
     }
 
-    // Сохранение изменений
-    function saveClient(key) {
-        const newBal = document.getElementById(`bal-${key}`).value;
-        const newCred = document.getElementById(`cred-${key}`).value;
-        const newPhone = document.getElementById(`phone-${key}`).value;
-        const newPin = document.getElementById(`pin-${key}`).value;
-
-        firebase.database().ref('clients/' + key).update({
-            balance: Number(newBal),
-            creditLimit: Number(newCred),
-            phone: newPhone,
-            clientPin: newPin
-        }).then(() => alert('Данные клиента обновлены!'));
+    function toggleDetails(key) {
+        const el = document.getElementById(`det-${key}`);
+        const all = document.querySelectorAll('.details');
+        all.forEach(d => { if(d.id !== `det-${key}`) d.style.display = 'none'; }); // Закрыть другие
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
     }
 
-    // Заморозка / Разморозка
-    function toggleFreeze(key, currentStatus) {
-        const action = currentStatus ? "разморозить" : "ЗАМОРОЗИТЬ";
-        if(confirm(`Вы уверены, что хотите ${action} этот счет?`)) {
-            firebase.database().ref('clients/' + key).update({
-                frozen: !currentStatus
-            });
+    function saveClient(key) {
+        const bal = document.getElementById(`bal-${key}`).value;
+        const bon = document.getElementById(`bon-${key}`).value;
+        const cred = document.getElementById(`cred-${key}`).value;
+
+        firebase.database().ref('clients/' + key).update({
+            balance: Number(bal),
+            bonuses: Number(bon),
+            creditLimit: Number(cred)
+        }).then(() => alert('Данные сохранены'));
+    }
+
+    function toggleFreeze(key, status) {
+        if(confirm(status ? "Разблокировать доступ?" : "ВНИМАНИЕ: Карта клиента будет полностью заблокирована! Продолжить?")) {
+            firebase.database().ref('clients/' + key).update({ frozen: !status });
         }
     }
 </script>
