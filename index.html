@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Staff Panel — Управление</title>
+    <title>Bank Staff Panel — Управление</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -31,6 +31,25 @@
         /* HEADER & FORMS */
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+
+        .btn-refresh {
+            background: white;
+            border: 1px solid #e5e5ea;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .btn-refresh:hover { background: #f2f2f7; transform: rotate(30deg); }
+        .btn-refresh:active { transform: rotate(180deg); }
+
         .add-box {
             background: var(--card-bg);
             padding: 24px;
@@ -41,7 +60,7 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
             margin-top: 15px;
         }
@@ -72,7 +91,7 @@
 
         /* SEARCH */
         .search-bar { margin-bottom: 20px; position: relative; }
-        .search-bar input { width: 100%; padding-left: 45px; height: 50px; background: white; }
+        .search-bar input { width: 100%; padding: 15px; height: 50px; background: white; box-sizing: border-box; }
 
         /* CLIENT LIST */
         .client-card {
@@ -103,7 +122,7 @@
             margin-left: 5px;
         }
 
-        /* DETAILS (HIDDEN BY DEFAULT) */
+        /* DETAILS */
         .details {
             display: none;
             margin-top: 20px;
@@ -136,22 +155,25 @@
 
 <div class="container">
     <header>
-        <h1>Сотрудник: Управление БД</h1>
-        <div id="status-fb" style="font-size: 12px; color: var(--success);">● Система онлайн</div>
+        <h1>Управление БД</h1>
+        <div class="header-actions">
+            <div id="status-fb" style="font-size: 12px; color: var(--success);">● Системы активны</div>
+            <button class="btn-refresh" onclick="location.reload()" title="Обновить страницу">↻</button>
+        </div>
     </header>
 
     <div class="add-box">
-        <h3 style="margin:0">Добавить нового участника</h3>
+        <h3 style="margin:0">Регистрация участника</h3>
         <div class="form-grid">
             <select id="newType">
                 <option value="Клиент">Обычный клиент</option>
                 <option value="ИП">Компания (ИП)</option>
             </select>
-            <input type="text" id="newName" placeholder="ФИО или Название компании">
-            <input type="text" id="newPhone" placeholder="Номер телефона">
-            <input type="text" id="newPin" placeholder="ПИН-код (4 знака)">
-            <input type="number" id="newBalance" placeholder="Начальный баланс">
-            <button class="btn btn-main" onclick="addClient()">Создать аккаунт</button>
+            <input type="text" id="newName" placeholder="ФИО / Название ИП">
+            <input type="text" id="newPhone" placeholder="Телефон">
+            <input type="text" id="newPin" placeholder="ПИН-код">
+            <input type="number" id="newBalance" placeholder="Баланс">
+            <button class="btn btn-main" onclick="addClient()">Создать</button>
         </div>
     </div>
 
@@ -159,12 +181,10 @@
         <input type="text" id="adminSearch" placeholder="Поиск по базе данных..." oninput="renderAdminList()">
     </div>
 
-    <div id="admin-list">
-        </div>
+    <div id="admin-list"></div>
 </div>
 
 <script>
-    // Конфигурация Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyA3J7KnUgxUHZigwRKmndm7xyxJeeLCrxg",
         authDomain: "webapp-b7149.firebaseapp.com",
@@ -180,14 +200,12 @@
 
     let allClients = [];
 
-    // Загрузка
     dbRef.on('value', (snapshot) => {
         const data = snapshot.val();
         allClients = data ? Object.keys(data).map(key => ({...data[key], fbKey: key})) : [];
         renderAdminList();
     });
 
-    // Добавление
     function addClient() {
         const name = document.getElementById('newName').value;
         const phone = document.getElementById('newPhone').value;
@@ -195,7 +213,7 @@
         const balance = document.getElementById('newBalance').value;
         const type = document.getElementById('newType').value;
 
-        if(!name || !phone || !pin) return alert("Заполните основные поля!");
+        if(!name || !phone || !pin) return alert("Заполните обязательные поля!");
 
         const newClient = {
             name: name,
@@ -211,12 +229,11 @@
         };
 
         dbRef.push(newClient).then(() => {
-            alert("Успешно создано!");
+            alert("Аккаунт успешно добавлен");
             document.querySelectorAll('.add-box input').forEach(i => i.value = '');
         });
     }
 
-    // Рендер списка
     function renderAdminList() {
         const query = document.getElementById('adminSearch').value.toLowerCase();
         const container = document.getElementById('admin-list');
@@ -237,7 +254,7 @@
                     <div class="card-header">
                         <div class="info-main">
                             <strong>${c.name} ${isIP ? '<span class="badge-ip">ИП</span>' : ''}</strong>
-                            <span>Тел: ${c.phone || 'не привязан'} | ПИН: ${c.clientPin}</span>
+                            <span>Тел: ${c.phone} | ПИН: ${c.clientPin}</span>
                         </div>
                         <div style="text-align: right">
                             <div style="font-weight:800">${(c.balance || 0).toLocaleString()} ₽</div>
@@ -249,30 +266,30 @@
                 <div class="details" id="det-${c.fbKey}">
                     <div class="details-grid">
                         <div class="stat-box">
-                            <label>Управление балансом</label>
+                            <label>Финансы</label>
                             <input type="number" id="bal-${c.fbKey}" value="${c.balance}">
                             <label style="margin-top:10px; display:block">Бонусы</label>
                             <input type="number" id="bon-${c.fbKey}" value="${c.bonuses || 0}">
-                            <button class="btn btn-save" onclick="saveClient('${c.fbKey}')">Обновить данные</button>
+                            <button class="btn btn-save" onclick="saveClient('${c.fbKey}')">Сохранить</button>
                         </div>
 
                         <div class="stat-box">
-                            <label>Копилки</label>
+                            <label>Накопления</label>
                             <div class="history-mini">
-                                ${c.piggies ? c.piggies.map(p => `<div>${p.target}₽ (Собрано: ${p.current}₽)</div>`).join('') : 'Нет копилок'}
+                                ${c.piggies ? c.piggies.map(p => `<div>${p.target}₽ (${p.current}₽)</div>`).join('') : 'Копилок нет'}
                             </div>
-                            <label style="margin-top:10px; display:block">Кредитный лимит</label>
+                            <label style="margin-top:10px; display:block">Кредит лимит</label>
                             <input type="number" id="cred-${c.fbKey}" value="${c.creditLimit || 0}">
                         </div>
 
                         <div class="stat-box">
-                            <label>История операций (последние 5)</label>
+                            <label>Последние действия</label>
                             <div class="history-mini">
-                                ${c.history ? c.history.slice(-5).reverse().map(h => `<div>${h.t}: <b>${h.a}₽</b></div>`).join('') : 'История пуста'}
+                                ${c.history ? c.history.slice(-5).reverse().map(h => `<div>${h.t}: <b>${h.a}₽</b></div>`).join('') : 'Пусто'}
                             </div>
                             <div class="actions">
                                 <button class="btn ${isFrozen ? 'btn-unfreeze' : 'btn-freeze'}" onclick="toggleFreeze('${c.fbKey}', ${isFrozen})">
-                                    ${isFrozen ? 'Разблокировать' : 'Заблокировать карту'}
+                                    ${isFrozen ? 'Разблокировать' : 'Заблокировать'}
                                 </button>
                             </div>
                         </div>
@@ -285,25 +302,21 @@
 
     function toggleDetails(key) {
         const el = document.getElementById(`det-${key}`);
-        const all = document.querySelectorAll('.details');
-        all.forEach(d => { if(d.id !== `det-${key}`) d.style.display = 'none'; }); // Закрыть другие
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+        const isVisible = el.style.display === 'block';
+        document.querySelectorAll('.details').forEach(d => d.style.display = 'none');
+        el.style.display = isVisible ? 'none' : 'block';
     }
 
     function saveClient(key) {
-        const bal = document.getElementById(`bal-${key}`).value;
-        const bon = document.getElementById(`bon-${key}`).value;
-        const cred = document.getElementById(`cred-${key}`).value;
-
         firebase.database().ref('clients/' + key).update({
-            balance: Number(bal),
-            bonuses: Number(bon),
-            creditLimit: Number(cred)
-        }).then(() => alert('Данные сохранены'));
+            balance: Number(document.getElementById(`bal-${key}`).value),
+            bonuses: Number(document.getElementById(`bon-${key}`).value),
+            creditLimit: Number(document.getElementById(`cred-${key}`).value)
+        }).then(() => alert('Данные успешно обновлены'));
     }
 
     function toggleFreeze(key, status) {
-        if(confirm(status ? "Разблокировать доступ?" : "ВНИМАНИЕ: Карта клиента будет полностью заблокирована! Продолжить?")) {
+        if(confirm(status ? "Разблокировать?" : "Заблокировать карту клиента?")) {
             firebase.database().ref('clients/' + key).update({ frozen: !status });
         }
     }
