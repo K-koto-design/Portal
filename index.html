@@ -75,6 +75,8 @@
         }
 
         input:focus { border-color: var(--primary); }
+        /* Стиль для заблокированного инпута */
+        input:disabled { background: #f2f2f7; color: #8e8e93; cursor: not-allowed; }
 
         .btn {
             padding: 12px 20px;
@@ -172,7 +174,7 @@
             <input type="text" id="newName" placeholder="ФИО / Название ИП">
             <input type="text" id="newPhone" placeholder="Телефон">
             <input type="text" id="newPin" placeholder="ПИН-код">
-            <input type="number" id="newBalance" placeholder="Баланс">
+            <input type="number" id="newBalance" placeholder="Баланс (10 - 50 000)">
             <button class="btn btn-main" onclick="addClient()">Создать</button>
         </div>
     </div>
@@ -210,21 +212,26 @@
         const name = document.getElementById('newName').value;
         const phone = document.getElementById('newPhone').value;
         const pin = document.getElementById('newPin').value;
-        const balance = document.getElementById('newBalance').value;
+        const balance = Number(document.getElementById('newBalance').value);
         const type = document.getElementById('newType').value;
 
         if(!name || !phone || !pin) return alert("Заполните обязательные поля!");
+        
+        // Лимит на выставление баланса от 10₽ до 50.000₽
+        if(balance < 10 || balance > 50000) {
+            return alert("Ошибка: Баланс при создании должен быть от 10 до 50 000 ₽");
+        }
 
         const newClient = {
             name: name,
             phone: phone,
             clientPin: pin,
-            balance: Number(balance) || 0,
+            balance: balance,
             orgType: type,
             frozen: false,
             bonuses: 0,
             creditLimit: 0,
-            history: [{t: "Открытие счета", a: Number(balance) || 0}],
+            history: [{t: "Открытие счета", a: balance}],
             piggies: []
         };
 
@@ -266,8 +273,8 @@
                 <div class="details" id="det-${c.fbKey}">
                     <div class="details-grid">
                         <div class="stat-box">
-                            <label>Финансы</label>
-                            <input type="number" id="bal-${c.fbKey}" value="${c.balance}">
+                            <label>Финансы (Изменение баланса заблокировано)</label>
+                            <input type="number" id="bal-${c.fbKey}" value="${c.balance}" disabled>
                             <label style="margin-top:10px; display:block">Бонусы</label>
                             <input type="number" id="bon-${c.fbKey}" value="${c.bonuses || 0}">
                             <button class="btn btn-save" onclick="saveClient('${c.fbKey}')">Сохранить</button>
@@ -308,11 +315,11 @@
     }
 
     function saveClient(key) {
+        // Баланс больше не отправляем в update, так как он заблокирован для редактирования
         firebase.database().ref('clients/' + key).update({
-            balance: Number(document.getElementById(`bal-${key}`).value),
             bonuses: Number(document.getElementById(`bon-${key}`).value),
             creditLimit: Number(document.getElementById(`cred-${key}`).value)
-        }).then(() => alert('Данные успешно обновлены'));
+        }).then(() => alert('Данные (бонусы и лимит) успешно обновлены'));
     }
 
     function toggleFreeze(key, status) {
