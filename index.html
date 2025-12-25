@@ -5,71 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Рабочий Портал PRO</title>
     
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Портал">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/300/shield.png">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
     <style>
         :root {
-            --bg: #f2f2f7;
-            --accent: #007aff;
-            --card: #ffffff;
-            --text: #1c1c1e;
-            --gray: #8e8e93;
-            --red: #ff3b30;
-            --green: #34c759;
-            --blue-light: #e8f0ff;
+            --bg: #f2f2f7; --accent: #007aff; --card: #ffffff; --text: #1c1c1e;
+            --gray: #8e8e93; --red: #ff3b30; --green: #34c759; --blue-light: #e8f0ff;
         }
 
         body, html { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); height: 100%; }
-
         .refresh-btn { position: fixed; top: 50px; right: 20px; width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; border: none; font-size: 20px; cursor: pointer; }
 
-        #ios-lock { display: none; padding: 40px 20px; text-align: center; }
-        .setup-card { background: white; border-radius: 20px; padding: 20px; text-align: left; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 20px; }
-        
         #login-screen { display: flex; flex-direction: column; justify-content: center; padding: 40px; height: 100vh; box-sizing: border-box; }
-        input { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; outline: none; }
-        .btn { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 600; width: 100%; cursor: pointer; }
+        input, select { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; outline: none; background: white; }
+        .btn { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 600; width: 100%; cursor: pointer; margin-bottom: 10px; }
+        .btn-red { background: var(--red); }
 
         #main-app { display: none; padding: 20px; }
         .header { background: var(--card); padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .total-sum { font-size: 28px; font-weight: 800; color: var(--accent); }
         
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-        .tab { background: #e5e5ea; padding: 10px 20px; border-radius: 20px; font-size: 14px; white-space: nowrap; cursor: pointer; transition: 0.2s; }
+        .tab { background: #e5e5ea; padding: 10px 20px; border-radius: 20px; font-size: 14px; white-space: nowrap; cursor: pointer; }
         .tab.active { background: var(--accent); color: white; }
 
         .item-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid #e5e5ea; position: relative; }
-        .status { font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; }
+        .status { font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; }
         .status-debt { background: #ffebeb; color: var(--red); }
         .status-ok { background: #e8f9ed; color: var(--green); }
         .status-frozen { background: #f2f2f7; color: var(--gray); text-decoration: line-through; }
-        .val { font-weight: bold; color: var(--accent); }
-
-        .freeze-btn { float: right; padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: bold; cursor: pointer; }
+        
+        .action-btns { float: right; display: flex; flex-direction: column; gap: 5px; }
+        .small-btn { padding: 6px 10px; border-radius: 8px; border: none; font-size: 10px; font-weight: bold; cursor: pointer; text-align: center; }
         .btn-freeze { background: #fef1f1; color: var(--red); }
         .btn-unfreeze { background: var(--blue-light); color: var(--accent); }
+        .btn-del { background: #eee; color: #555; }
 
+        .admin-form { background: white; padding: 20px; border-radius: 20px; margin-bottom: 20px; border: 1px solid var(--accent); }
         footer { text-align: center; font-size: 10px; color: var(--gray); margin-top: 20px; padding-bottom: 20px; }
     </style>
 </head>
 <body>
 
     <button class="refresh-btn" onclick="hardReset()">🔄</button>
-
-    <div id="ios-lock">
-        <div style="font-size: 50px;">📲</div>
-        <h2>Доступ ограничен</h2>
-        <p>Для работы на iPhone добавьте сервис на экран Домой.</p>
-        <div class="setup-card">
-            <p>1. Нажмите кнопку <b>«Поделиться»</b>.</p>
-            <p>2. Выберите <b>«На экран „Домой“»</b>.</p>
-            <p>3. Запустите появившееся приложение.</p>
-        </div>
-    </div>
 
     <div id="login-screen">
         <h1 style="text-align:center;">Вход в систему</h1>
@@ -88,87 +67,57 @@
         <div class="tabs">
             <div class="tab active" onclick="showTab('clients', this)">Клиенты</div>
             <div class="tab" onclick="showTab('loans', this)">Обязательства</div>
-            <div class="tab" onclick="showTab('assets', this)">Реестр карт</div>
-            <div class="tab" onclick="showTab('freeze', this)">❄️ Заморозка</div>
+            <div class="tab" onclick="showTab('freeze', this)">⚙️ Управление</div>
+            <div class="tab" onclick="showTab('admin', this)">➕ Добавить</div>
         </div>
 
         <div id="content-area"></div>
         
         <footer>
-            Версия системы: 4.2.1 (Persistent)<br>
-            Данные сохраняются локально
+            Система: WebApp-B7149<br>
+            Облачная база: Firebase Realtime
         </footer>
     </div>
 
     <script>
-        // --- КОНФИГ И СОХРАНЕНИЕ ---
-        const APP_VERSION = "4.2.1";
-        const STORAGE_KEY = "portal_frozen_clients";
-
-        function hardReset() {
-            const url = new URL(window.location.href);
-            url.searchParams.set('reload', Date.now());
-            window.location.replace(url.toString());
-        }
-
-        const data = {
-            clients: [
-                { id: 1, name: "Артём", phone: "+7 (911) 796-15-22", status: "Обычно", frozen: false },
-                { id: 2, name: "Даня", phone: "+381 (000) 382-75-02", status: "Обычно", frozen: false },
-                { id: 3, name: "Матвей", phone: "+7 (901) 736-24-15", status: "Обычно", frozen: false },
-                { id: 4, name: "Святослав", phone: "+375 (529) 888-00-88", status: "Обычно", frozen: false },
-                { id: 5, name: "Роман", phone: "+7 (906) 235-74-33", status: "Обычно", frozen: false },
-                { id: 6, name: "Михаил", phone: "+7 (999) 000-11-22", status: "Задолженность", frozen: false },
-                { id: 7, name: "Артём", phone: "+7 (890) 763-18-90", status: "Обычно", frozen: false },
-                { id: 8, name: "Алексей", phone: "+7 (999) 000-11-22", status: "Обычно", frozen: false },
-                { id: 9, name: "Тимофей", phone: "+7 (902) 871-61-09", status: "Обычно", frozen: false },
-                { id: 10, name: "Роман", phone: "+7 (918) 246-74-38", status: "Обычно", frozen: false },
-                { id: 11, name: "Александр", phone: "+7 (995) 889-31-27", status: "Обычно", frozen: false },
-                { id: 12, name: "Артём", phone: "+0", status: "Обычно", frozen: false },
-                { id: 13, name: "Александр", phone: "+0", status: "Обычно", frozen: false },
-                { id: 14, name: "Артём", phone: "+0", status: "Обычно", frozen: false },
-                { id: 15, name: "Даниил", phone: "+7 (999) 111-00-50", status: "Обычно", frozen: false }
-            ],
-            loans: [{ holder: "Михаил", amount: 4286 },{ holder: "Святослав", amount: 20000 }],
-            cards: [
-                { id: 1, type: "МИР *4152", holder: "Артём" },
-                { id: 2, type: "МИР *0102", holder: "Даня" },
-                { id: 3, type: "МИР *3321", holder: "Матвей" },
-                { id: 4, type: "МИР *5642", holder: "Святослав" },
-                { id: 5, type: "МИР *2212", holder: "Роман" },
-                { id: 6, type: "МИР *4856", holder: "Михаил" },
-                { id: 7, type: "МИР *8732", holder: "Артём" },
-                { id: 8, type: "МИР *9001", holder: "Алексей" },
-                { id: 9, type: "МИР *5673", holder: "Тимофей" },
-                { id: 10, type: "МИР *7439", holder: "Роман" },
-                { id: 11, type: "МИР *9873", holder: "Александр" },
-                { id: 12, type: "МИР *2645", holder: "Артём" },
-                { id: 13, type: "МИР *1039", holder: "Александр" },
-                { id: 14, type: "МИР *2340", holder: "Артём" },
-                { id: 15, type: "МИР *2010", holder: "Даниил" }
-            ]
+        // --- КОНФИГУРАЦИЯ FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3J7KnUgxUHZigwRKmndm7xyxJeeLCrxg",
+            authDomain: "webapp-b7149.firebaseapp.com",
+            databaseURL: "https://webapp-b7149-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "webapp-b7149",
+            storageBucket: "webapp-b7149.firebasestorage.app",
+            messagingSenderId: "1034835242406",
+            appId: "1:1034835242406:web:98499dc1edbb83e4b8f367"
         };
 
-        // ЗАГРУЗКА СОСТОЯНИЯ ИЗ ПАМЯТИ
-        function loadFrozenState() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                const frozenIds = JSON.parse(saved);
-                data.clients.forEach(c => {
-                    if (frozenIds.includes(c.id)) c.frozen = true;
-                });
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const clientsRef = db.ref('clients');
+
+        let localClients = [];
+
+        // --- ЛОГИКА ---
+
+        function hardReset() { location.reload(); }
+
+        // Получение данных в реальном времени
+        clientsRef.on('value', (snapshot) => {
+            const val = snapshot.val();
+            localClients = val ? Object.keys(val).map(key => ({...val[key], fbKey: key})) : [];
+            updateUI();
+        });
+
+        function updateUI() {
+            const activeTab = document.querySelector('.tab.active');
+            if (activeTab) {
+                // Имитируем клик для обновления текущего вида
+                const type = activeTab.getAttribute('onclick').match(/'([^']+)'/)[1];
+                renderContent(type);
             }
-        }
-
-        // СОХРАНЕНИЕ СОСТОЯНИЯ В ПАМЯТЬ
-        function saveFrozenState() {
-            const frozenIds = data.clients.filter(c => c.frozen).map(c => c.id);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(frozenIds));
-        }
-
-        function updateSum() {
-            const totalSum = data.loans.reduce((acc, curr) => acc + curr.amount, 0);
-            document.getElementById('total-display').innerText = totalSum.toLocaleString() + " ₽";
+            
+            const total = localClients.reduce((acc, c) => acc + (Number(c.loan) || 0), 0);
+            document.getElementById('total-display').innerText = total.toLocaleString() + " ₽";
         }
 
         function tryLogin() {
@@ -177,84 +126,113 @@
             if (u === "Admin" && p === "45621") {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-app').style.display = 'block';
-                updateSum();
                 showTab('clients', document.querySelector('.tab'));
             } else {
                 document.getElementById('error').style.display = 'block';
             }
         }
 
-        function toggleFreeze(id) {
-            const client = data.clients.find(c => c.id === id);
-            if(client) {
-                client.frozen = !client.frozen;
-                saveFrozenState(); // Сохраняем сразу после изменения
-                showTab('freeze', document.querySelectorAll('.tab')[3]);
+        function addNewClient() {
+            const name = document.getElementById('new-name').value;
+            const phone = document.getElementById('new-phone').value;
+            const loan = document.getElementById('new-loan').value;
+            const status = document.getElementById('new-status').value;
+
+            if(!name || !phone) return alert("Заполните имя и телефон");
+
+            clientsRef.push({
+                name, phone, 
+                loan: Number(loan) || 0, 
+                status: status,
+                frozen: false,
+                card: "МИР *" + Math.floor(1000 + Math.random() * 9000)
+            });
+
+            alert("Клиент добавлен в базу!");
+            showTab('clients', document.querySelectorAll('.tab')[0]);
+        }
+
+        function toggleFreeze(fbKey, currentStatus) {
+            db.ref('clients/' + fbKey).update({ frozen: !currentStatus });
+        }
+
+        function deleteClient(fbKey, name) {
+            if(confirm(`Удалить клиента ${name} навсегда?`)) {
+                db.ref('clients/' + fbKey).remove();
             }
         }
 
         function showTab(type, el) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             el.classList.add('active');
-            
+            renderContent(type);
+        }
+
+        function renderContent(type) {
             let html = '';
+            const container = document.getElementById('content-area');
+
             if (type === 'clients') {
-                data.clients.forEach(c => {
-                    const isFrozen = c.frozen;
-                    const sClass = isFrozen ? "status-frozen" : (c.status === "Задолженность" ? "status-debt" : "status-ok");
-                    html += `<div class="item-card" style="opacity: ${isFrozen ? '0.6' : '1'}">
-                        <b>${c.name} ${isFrozen ? '❄️' : ''}</b><br>
-                        <span style="font-size:13px; color:gray">${c.phone}</span><br>
-                        <span class="status ${sClass}">${isFrozen ? 'ЗАБЛОКИРОВАН' : c.status}</span>
-                    </div>`;
+                localClients.forEach(c => {
+                    const sClass = c.frozen ? "status-frozen" : (c.status === "Задолженность" ? "status-debt" : "status-ok");
+                    html += `
+                        <div class="item-card" style="opacity: ${c.frozen ? '0.6' : '1'}">
+                            <b>${c.name} ${c.frozen ? '❄️' : ''}</b><br>
+                            <span style="font-size:13px; color:gray">${c.phone}</span><br>
+                            <span class="status ${sClass}">${c.frozen ? 'ЗАБЛОКИРОВАН' : c.status}</span>
+                            <div style="font-size:11px; color:gray; margin-top:5px;">Карта: ${c.card}</div>
+                        </div>`;
                 });
-            } else if (type === 'loans') {
-                data.loans.forEach(l => {
-                    html += `<div class="item-card">
-                        <div style="font-size:12px; color:gray">Держатель:</div>
-                        <div>${l.holder}</div>
-                        <div class="val" style="margin-top:5px">${l.amount.toLocaleString()} ₽</div>
-                    </div>`;
-                });
-            } else if (type === 'assets') {
-                data.cards.forEach(card => {
-                    const client = data.clients.find(c => c.name === card.holder);
-                    const isFrozen = client ? client.frozen : false;
-                    html += `<div class="item-card" style="opacity: ${isFrozen ? '0.5' : '1'}">
-                        <b>${card.type}</b> ${isFrozen ? '🔴' : '🟢'}<br>
-                        <div style="font-size:13px; color:gray">Держатель: ${card.holder}</div>
-                        <div style="font-size:11px; color:${isFrozen ? 'red' : 'green'}">${isFrozen ? 'Карта неактивна' : 'Карта активна'}</div>
-                    </div>`;
-                });
-            } else if (type === 'freeze') {
-                html += '<p style="font-size:12px; color:gray; margin-left:5px;">Управление доступом к счетам:</p>';
-                data.clients.forEach(c => {
-                    html += `<div class="item-card">
-                        <button class="freeze-btn ${c.frozen ? 'btn-unfreeze' : 'btn-freeze'}" onclick="toggleFreeze(${c.id})">
-                            ${c.frozen ? 'РАЗМОРОЗИТЬ' : 'ЗАМОРОЗИТЬ'}
-                        </button>
-                        <b>${c.name}</b><br>
-                        <span style="font-size:12px; color:gray">ID: 00${c.id}</span>
-                    </div>`;
+            } 
+            
+            else if (type === 'loans') {
+                const debtors = localClients.filter(c => c.loan > 0);
+                if(debtors.length === 0) html = '<p style="text-align:center; color:gray;">Активных долгов нет</p>';
+                debtors.forEach(c => {
+                    html += `
+                        <div class="item-card">
+                            <div style="font-size:12px; color:gray">Держатель:</div>
+                            <div>${c.name}</div>
+                            <div style="font-weight:bold; color:var(--accent); margin-top:5px">${c.loan.toLocaleString()} ₽</div>
+                        </div>`;
                 });
             }
-            document.getElementById('content-area').innerHTML = html;
-        }
 
-        function init() {
-            loadFrozenState(); // Загружаем блокировки из памяти
-
-            const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-            if (isIOS && !isStandalone) {
-                document.getElementById('ios-lock').style.display = 'block';
-                document.getElementById('login-screen').style.display = 'none';
-                document.querySelector('.refresh-btn').style.display = 'none';
+            else if (type === 'freeze') {
+                localClients.forEach(c => {
+                    html += `
+                        <div class="item-card">
+                            <div class="action-btns">
+                                <button class="small-btn ${c.frozen ? 'btn-unfreeze' : 'btn-freeze'}" 
+                                    onclick="toggleFreeze('${c.fbKey}', ${c.frozen})">
+                                    ${c.frozen ? 'РАЗМОРОЗИТЬ' : 'ЗАМОРОЗИТЬ'}
+                                </button>
+                                <button class="small-btn btn-del" onclick="deleteClient('${c.fbKey}', '${c.name}')">УДАЛИТЬ</button>
+                            </div>
+                            <b>${c.name}</b><br>
+                            <span style="font-size:12px; color:gray">${c.phone}</span>
+                        </div>`;
+                });
             }
-        }
 
-        window.onload = init;
+            else if (type === 'admin') {
+                html = `
+                    <div class="admin-form">
+                        <h3 style="margin-top:0">Новый клиент</h3>
+                        <input type="text" id="new-name" placeholder="ФИО">
+                        <input type="text" id="new-phone" placeholder="+7 (___) ___-__-__">
+                        <input type="number" id="new-loan" placeholder="Сумма долга (если есть)">
+                        <select id="new-status">
+                            <option value="Обычно">Статус: Обычно</option>
+                            <option value="Задолженность">Статус: Задолженность</option>
+                        </select>
+                        <button class="btn" onclick="addNewClient()">СОХРАНИТЬ В FIREBASE</button>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
     </script>
 </body>
 </html>
