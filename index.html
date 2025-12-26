@@ -127,9 +127,10 @@
         .history-item.plus { color: var(--green); }
         .history-item.minus { color: var(--red); }
 
-        .btn-group { display: flex; gap: 8px; }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
         .btn {
             flex: 1;
+            min-width: 100px;
             padding: 12px;
             border-radius: 12px;
             border: none;
@@ -146,6 +147,7 @@
         .btn.decline { background: var(--red); color: white; }
         .btn.secondary { background: var(--accent); color: white; }
         .btn.outline { background: #e5e5ea; color: #333; }
+        .btn.delete-user { background: #fdf2f2; color: var(--red); border: 1px solid #ffcfce; }
 
         .badge {
             padding: 4px 10px;
@@ -233,7 +235,6 @@
     </nav>
 
     <script>
-        // ОБНОВЛЕННЫЙ ПУТЬ ТУТ
         const firebaseConfig = {
             apiKey: "AIzaSyA3J7KnUgxUHZigwRKmndm7xyxJeeLCrxg",
             databaseURL: "https://webapp-b7149-default-rtdb.europe-west1.firebasedatabase.app",
@@ -273,7 +274,7 @@
                         <div class="app-info">
                             <span class="badge ${app.orgType === 'ИП' ? 'ip' : 'user'}">${app.orgType}</span>
                             <b>${app.name}</b>
-                            <small>📞 ${app.phone}<br>🔑 ПИН:  ${app.inn ? '<br>📄 ИНН: ' + app.inn : ''}</small>
+                            <small>📞 ${app.phone}${app.inn ? '<br>📄 ИНН: ' + app.inn : ''}</small>
                         </div>
                         <div class="btn-group">
                             <button class="btn accept" onclick="approveApp('${child.key}')">Одобрить</button>
@@ -316,7 +317,7 @@
                         <div class="user-header">
                             <div>
                                 <b>${u.name}</b>
-                                <small style="display:block; color:var(--text-secondary)">${u.phone} | ПИН: ${u.clientPin}</small>
+                                <small style="display:block; color:var(--text-secondary)">${u.phone}</small>
                             </div>
                             <div style="text-align:right">
                                 <div style="font-weight:bold; color:var(--accent)">${(u.balance || 0).toLocaleString()} ₽</div>
@@ -339,6 +340,7 @@
                                 ${u.frozen ? '🔓 Разблок.' : '🔒 Блок'}
                             </button>
                             <button class="btn secondary" onclick="toggleHistory('${key}')">📊 Инфо</button>
+                            <button class="btn delete-user" onclick="deleteClient('${key}', '${u.name}')">🗑 Удалить</button>
                         </div>
 
                         <div id="history-${key}" class="history-box hidden">
@@ -372,6 +374,12 @@
 
         function toggleFreeze(key, currentStatus) {
             db.ref('clients/' + key).update({ frozen: !currentStatus });
+        }
+
+        function deleteClient(key, name) {
+            if(confirm(`Вы действительно хотите удалить клиента ${name} из базы навсегда?`)) {
+                db.ref('clients/' + key).remove();
+            }
         }
     </script>
 </body>
