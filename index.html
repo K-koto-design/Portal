@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>KOTOStaff</title>
+    <title>MAX Staff — Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -24,10 +24,9 @@
             background-color: var(--system-bg);
             color: var(--text);
             margin: 0;
-            padding-bottom: 80px; /* Для нижней навигации на мобильных */
+            padding-bottom: 80px;
         }
 
-        /* Навигация */
         .sidebar {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(20px);
@@ -47,7 +46,27 @@
         h1 { font-size: 22px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
         h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
 
-        /* Карточки */
+        /* Фильтры базы */
+        .base-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .filter-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 10px;
+            border: none;
+            background: #e5e5ea;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .filter-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
         .card {
             background: var(--card-bg);
             backdrop-filter: blur(10px);
@@ -58,30 +77,15 @@
             border: 1px solid rgba(255,255,255,0.3);
         }
 
-        /* Список заявок */
-        .app-item {
-            background: #fff;
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .app-info b { font-size: 17px; display: block; margin-bottom: 4px; }
-        .app-info small { color: var(--text-secondary); font-size: 13px; line-height: 1.4; }
-
-        /* Таблица клиентов на мобилках */
-        .user-row {
+        .app-item, .user-row {
             background: #fff;
             border-radius: 15px;
             padding: 16px;
             margin-bottom: 12px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
+            border: 1px solid rgba(0,0,0,0.05);
         }
 
         .user-header { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -104,11 +108,27 @@
             border-radius: 10px;
             font-size: 15px;
             font-weight: 600;
-            outline: none;
             background: #fff;
         }
 
-        /* Кнопки */
+        /* История транзакций */
+        .history-box {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            padding: 4px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .history-item.plus { color: var(--green); }
+        .history-item.minus { color: var(--red); }
+
         .btn-group { display: flex; gap: 8px; }
         .btn {
             flex: 1;
@@ -118,13 +138,11 @@
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: opacity 0.2s, transform 0.1s;
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 5px;
         }
-        .btn:active { opacity: 0.7; transform: scale(0.98); }
 
         .btn.accept { background: var(--green); color: white; }
         .btn.decline { background: var(--red); color: white; }
@@ -141,12 +159,9 @@
         .badge.ip { background: #000; color: #fff; }
         .badge.user { background: #007aff; color: #fff; }
 
-        /* Нижнее меню */
         .tab-bar {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: 0; left: 0; right: 0;
             height: 70px;
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(20px);
@@ -169,21 +184,18 @@
         .tab-item.active { color: var(--accent); }
         .tab-icon { font-size: 22px; margin-bottom: 4px; }
 
-        .hidden { display: none; }
+        .hidden { display: none !important; }
 
         @media (min-width: 768px) {
-            .main-content { padding: 40px; }
-            .user-row { flex-direction: row; align-items: center; justify-content: space-between; }
-            .inputs-grid { display: flex; background: none; padding: 0; }
-            .input-group input { width: 120px; }
-            .sidebar { padding: 20px 40px; }
+            .user-row { flex-direction: column; }
+            .inputs-grid { display: grid; }
         }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <h1 style="color: var(--accent);">KOTOStaff</h1>
+        <h1 style="color: var(--accent);">MAX Staff</h1>
         <div id="status-dot" style="width: 10px; height: 10px; background: var(--green); border-radius: 50%;"></div>
     </div>
 
@@ -196,7 +208,13 @@
         </section>
 
         <section id="sec-clients" class="hidden">
-            <h2><span style="font-size: 24px;">👥</span> Клиенты</h2>
+            <h2><span style="font-size: 24px;">👥</span> База</h2>
+            
+            <div class="base-filters">
+                <button class="filter-btn active" onclick="filterBase('Физическое лицо', this)">Клиенты</button>
+                <button class="filter-btn" onclick="filterBase('ИП', this)">ИП</button>
+            </div>
+
             <div id="clients-list"></div>
         </section>
     </div>
@@ -225,12 +243,21 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        let currentFilter = 'Физическое лицо';
+
         function showSec(id, el) {
             document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
             document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
             document.getElementById(id).classList.remove('hidden');
             el.classList.add('active');
             window.scrollTo(0,0);
+        }
+
+        function filterBase(type, btn) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderClients();
         }
 
         // 1. Загрузка ЗАЯВОК
@@ -259,7 +286,6 @@
             });
         });
 
-        // 2. Одобрение заявки
         function approveApp(key) {
             db.ref('applications/' + key).once('value', snap => {
                 const data = snap.val();
@@ -270,24 +296,34 @@
         }
 
         function deleteApp(key) { 
-            if(confirm("Удалить заявку безвозвратно?")) db.ref('applications/' + key).remove(); 
+            if(confirm("Удалить заявку?")) db.ref('applications/' + key).remove(); 
         }
 
-        // 3. Управление КЛИЕНТАМИ
+        // 2. Управление КЛИЕНТАМИ
+        let allClients = {};
         db.ref('clients').on('value', snap => {
+            allClients = snap.val() || {};
+            renderClients();
+        });
+
+        function renderClients() {
             const list = document.getElementById('clients-list');
             list.innerHTML = "";
-            snap.forEach(child => {
-                const u = child.val();
-                const key = child.key;
+            
+            Object.keys(allClients).forEach(key => {
+                const u = allClients[key];
+                if (u.orgType !== currentFilter) return;
+
                 list.innerHTML += `
                     <div class="user-row">
                         <div class="user-header">
                             <div>
                                 <b>${u.name}</b>
-                                <small style="color:var(--text-secondary)">${u.phone} | ${u.orgType}</small>
+                                <small style="display:block; color:var(--text-secondary)">${u.phone} | ПИН: ${u.clientPin}</small>
                             </div>
-                            <div style="font-weight:bold; color:var(--accent)">${(u.balance || 0).toLocaleString()} ₽</div>
+                            <div style="text-align:right">
+                                <div style="font-weight:bold; color:var(--accent)">${(u.balance || 0).toLocaleString()} ₽</div>
+                            </div>
                         </div>
                         
                         <div class="inputs-grid">
@@ -305,12 +341,36 @@
                             <button class="btn ${u.frozen ? 'accept' : 'outline'}" onclick="toggleFreeze('${key}', ${u.frozen})">
                                 ${u.frozen ? '🔓 Разблок.' : '🔒 Блок'}
                             </button>
-                            <button class="btn secondary" onclick="viewDetails('${key}')">ℹ️ Инфо</button>
+                            <button class="btn secondary" onclick="toggleHistory('${key}')">📊 Инфо</button>
+                        </div>
+
+                        <div id="history-${key}" class="history-box hidden">
+                            <div style="font-size:11px; font-weight:bold; margin-bottom:5px">ИСТОРИЯ ОПЕРАЦИЙ:</div>
+                            ${renderHistory(u.history)}
                         </div>
                     </div>
                 `;
             });
-        });
+        }
+
+        function renderHistory(history) {
+            if (!history) return "<div style='font-size:12px; color:#8e8e93'>Нет операций</div>";
+            
+            // Если история - это объект, превращаем в массив
+            const historyArr = Array.isArray(history) ? history : Object.values(history);
+            
+            return historyArr.reverse().map(h => `
+                <div class="history-item ${h.type === 'plus' ? 'plus' : 'minus'}">
+                    <span>${h.date || ''} ${h.title || (h.type === 'plus' ? 'Пополнение' : 'Покупка')}</span>
+                    <b>${h.type === 'plus' ? '+' : '-'}${h.amount} ₽</b>
+                </div>
+            `).join('');
+        }
+
+        function toggleHistory(key) {
+            const el = document.getElementById(`history-${key}`);
+            el.classList.toggle('hidden');
+        }
 
         function updateVal(key, field, val) {
             db.ref('clients/' + key).update({ [field]: Number(val) });
@@ -318,13 +378,6 @@
 
         function toggleFreeze(key, currentStatus) {
             db.ref('clients/' + key).update({ frozen: !currentStatus });
-        }
-
-        function viewDetails(key) {
-            db.ref('clients/' + key).once('value', snap => {
-                const u = snap.val();
-                alert(`Баланс: ${u.balance} ₽\nПИН: ${u.clientPin}\nОпераций: ${u.history ? u.history.length : 0}`);
-            });
         }
     </script>
 </body>
