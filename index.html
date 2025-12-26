@@ -273,7 +273,7 @@
                         <div class="app-info">
                             <span class="badge ${app.orgType === 'ИП' ? 'ip' : 'user'}">${app.orgType}</span>
                             <b>${app.name}</b>
-                            <small>📞 ${app.phone}<br>🔑 ПИН: ${app.clientPin} ${app.inn ? '<br>📄 ИНН: ' + app.inn : ''}</small>
+                            <small>📞 ${app.phone}<br>🔑 ПИН:  ${app.inn ? '<br>📄 ИНН: ' + app.inn : ''}</small>
                         </div>
                         <div class="btn-group">
                             <button class="btn accept" onclick="approveApp('${child.key}')">Одобрить</button>
