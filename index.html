@@ -46,7 +46,6 @@
         h1 { font-size: 22px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
         h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
 
-        /* Фильтры базы */
         .base-filters {
             display: flex;
             gap: 10px;
@@ -111,7 +110,6 @@
             background: #fff;
         }
 
-        /* История транзакций */
         .history-box {
             margin-top: 10px;
             padding-top: 10px;
@@ -235,6 +233,7 @@
     </nav>
 
     <script>
+        // ОБНОВЛЕННЫЙ ПУТЬ ТУТ
         const firebaseConfig = {
             apiKey: "AIzaSyA3J7KnUgxUHZigwRKmndm7xyxJeeLCrxg",
             databaseURL: "https://webapp-b7149-default-rtdb.europe-west1.firebasedatabase.app",
@@ -260,7 +259,6 @@
             renderClients();
         }
 
-        // 1. Загрузка ЗАЯВОК
         db.ref('applications').on('value', snap => {
             const list = document.getElementById('applications-list');
             list.innerHTML = "";
@@ -299,7 +297,6 @@
             if(confirm("Удалить заявку?")) db.ref('applications/' + key).remove(); 
         }
 
-        // 2. Управление КЛИЕНТАМИ
         let allClients = {};
         db.ref('clients').on('value', snap => {
             allClients = snap.val() || {};
@@ -355,10 +352,7 @@
 
         function renderHistory(history) {
             if (!history) return "<div style='font-size:12px; color:#8e8e93'>Нет операций</div>";
-            
-            // Если история - это объект, превращаем в массив
             const historyArr = Array.isArray(history) ? history : Object.values(history);
-            
             return historyArr.reverse().map(h => `
                 <div class="history-item ${h.type === 'plus' ? 'plus' : 'minus'}">
                     <span>${h.date || ''} ${h.title || (h.type === 'plus' ? 'Пополнение' : 'Покупка')}</span>
