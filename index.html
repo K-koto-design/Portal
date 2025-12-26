@@ -2,332 +2,153 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Bank Staff Panel — Управление</title>
+    <title>MAX Staff — Управление Банком</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
-        :root {
-            --primary: #007aff;
-            --success: #34c759;
-            --warning: #ff9500;
-            --danger: #ff3b30;
-            --bg: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-main: #1c1c1e;
-            --text-sec: #8e8e93;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container { max-width: 1000px; margin: 0 auto; }
-
-        /* HEADER & FORMS */
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        :root { --primary: #007aff; --bg: #f5f5f7; --card: #ffffff; --text: #1c1c1e; --green: #34c759; --red: #ff3b30; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; display: flex; }
         
-        .header-actions { display: flex; align-items: center; gap: 15px; }
-
-        .btn-refresh {
-            background: white;
-            border: 1px solid #e5e5ea;
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            transition: 0.3s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .btn-refresh:hover { background: #f2f2f7; transform: rotate(30deg); }
-        .btn-refresh:active { transform: rotate(180deg); }
-
-        .add-box {
-            background: var(--card-bg);
-            padding: 24px;
-            border-radius: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            margin-bottom: 30px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        input, select {
-            padding: 12px 16px;
-            border: 1px solid #e5e5ea;
-            border-radius: 12px;
-            font-size: 14px;
-            outline: none;
-            transition: 0.2s;
-        }
-
-        input:focus { border-color: var(--primary); }
-        /* Стиль для заблокированного инпута */
-        input:disabled { background: #f2f2f7; color: #8e8e93; cursor: not-allowed; }
-
-        .btn {
-            padding: 12px 20px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 14px;
-        }
-
-        .btn-main { background: var(--primary); color: white; }
-        .btn-main:hover { background: #0056b3; }
-
-        /* SEARCH */
-        .search-bar { margin-bottom: 20px; position: relative; }
-        .search-bar input { width: 100%; padding: 15px; height: 50px; background: white; box-sizing: border-box; }
-
-        /* CLIENT LIST */
-        .client-card {
-            background: var(--card-bg);
-            border-radius: 18px;
-            padding: 20px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-            cursor: pointer;
-            transition: transform 0.2s;
-            border-left: 5px solid var(--primary);
-        }
-        .client-card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
-        .client-card.frozen { border-left-color: var(--danger); }
-        .client-card.is-ip { border-left-color: #000; }
-
-        .card-header { display: flex; justify-content: space-between; align-items: center; }
-        .info-main strong { font-size: 18px; display: block; }
-        .info-main span { color: var(--text-sec); font-size: 13px; }
-
-        .badge-ip {
-            background: #000;
-            color: #fff;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            vertical-align: middle;
-            margin-left: 5px;
-        }
-
-        /* DETAILS */
-        .details {
-            display: none;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #f2f2f7;
-            animation: fadeIn 0.3s;
-        }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .details-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-        }
-
-        .stat-box { background: #f9f9fb; padding: 15px; border-radius: 12px; }
-        .stat-box label { font-size: 11px; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-box .val { font-size: 16px; font-weight: 700; margin-top: 5px; display: block; }
-
-        .actions { display: flex; gap: 10px; margin-top: 20px; }
+        .sidebar { width: 280px; background: #fff; height: 100vh; border-right: 1px solid #ddd; padding: 20px; position: fixed; }
+        .main-content { margin-left: 280px; padding: 40px; width: 100%; }
         
-        .btn-freeze { background: #fff1f0; color: var(--danger); }
-        .btn-unfreeze { background: #f6ffed; color: var(--success); }
-        .btn-save { background: var(--primary); color: white; width: 100%; margin-top: 10px; }
+        .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        h2 { margin-top: 0; font-size: 20px; }
+        
+        .app-item { border-bottom: 1px solid #eee; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
+        .btn-group { display: flex; gap: 10px; }
+        .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
+        .btn.accept { background: var(--green); color: white; }
+        .btn.decline { background: var(--red); color: white; }
+        
+        .user-row { cursor: pointer; transition: 0.2s; border-radius: 10px; padding: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; border-bottom: 1px solid #eee; }
+        .user-row:hover { background: #f0f7ff; }
+        
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .badge.ip { background: #000; color: #fff; }
+        .badge.user { background: #e5e5ea; color: #333; }
 
-        .history-mini { font-size: 12px; max-height: 100px; overflow-y: auto; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
+        input { padding: 8px; border: 1px solid #ddd; border-radius: 6px; width: 100px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1>Управление БД</h1>
-        <div class="header-actions">
-            <div id="status-fb" style="font-size: 12px; color: var(--success);">● Системы активны</div>
-            <button class="btn-refresh" onclick="location.reload()" title="Обновить страницу">↻</button>
-        </div>
-    </header>
-
-    <div class="add-box">
-        <h3 style="margin:0">Регистрация участника</h3>
-        <div class="form-grid">
-            <select id="newType">
-                <option value="Клиент">Обычный клиент</option>
-                <option value="ИП">Компания (ИП)</option>
-            </select>
-            <input type="text" id="newName" placeholder="ФИО / Название ИП">
-            <input type="text" id="newPhone" placeholder="Телефон">
-            <input type="text" id="newPin" placeholder="ПИН-код">
-            <input type="number" id="newBalance" placeholder="Баланс (10 - 50 000)">
-            <button class="btn btn-main" onclick="addClient()">Создать</button>
+    <div class="sidebar">
+        <h1 style="font-size: 22px; color: var(--primary);">MAX Staff</h1>
+        <hr>
+        <div style="margin-top: 20px;">
+            <p style="font-weight: 600; color: #888;">МЕНЮ</p>
+            <div style="padding: 10px 0; cursor: pointer; color: var(--primary);">● Заявки</div>
+            <div style="padding: 10px 0; cursor: pointer;">● База клиентов</div>
         </div>
     </div>
 
-    <div class="search-bar">
-        <input type="text" id="adminSearch" placeholder="Поиск по базе данных..." oninput="renderAdminList()">
+    <div class="main-content">
+        <div class="card">
+            <h2>🔔 Новые заявки на регистрацию</h2>
+            <div id="applications-list">Загрузка...</div>
+        </div>
+
+        <div class="card">
+            <h2>👥 Управление клиентами</h2>
+            <div id="users-table">
+                <div class="user-row" style="font-weight: bold; border-bottom: 2px solid #eee;">
+                    <span>Имя / Компания</span>
+                    <span>Бонусы</span>
+                    <span>Кредит (Цифры)</span>
+                    <span>Статус / Действия</span>
+                </div>
+                <div id="clients-list"></div>
+            </div>
+        </div>
     </div>
 
-    <div id="admin-list"></div>
-</div>
-
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyA3J7KnUgxUHZigwRKmndm7xyxJeeLCrxg",
-        authDomain: "webapp-b7149.firebaseapp.com",
-        databaseURL: "https://webapp-b7149-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "webapp-b7149",
-        storageBucket: "webapp-b7149.firebasestorage.app",
-        messagingSenderId: "1034835242406",
-        appId: "1:1034835242406:web:98499dc1edbb83e4b8f367"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const dbRef = firebase.database().ref('clients');
-
-    let allClients = [];
-
-    dbRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        allClients = data ? Object.keys(data).map(key => ({...data[key], fbKey: key})) : [];
-        renderAdminList();
-    });
-
-    function addClient() {
-        const name = document.getElementById('newName').value;
-        const phone = document.getElementById('newPhone').value;
-        const pin = document.getElementById('newPin').value;
-        const balance = Number(document.getElementById('newBalance').value);
-        const type = document.getElementById('newType').value;
-
-        if(!name || !phone || !pin) return alert("Заполните обязательные поля!");
-        
-        // Лимит на выставление баланса от 10₽ до 50.000₽
-        if(balance < 10 || balance > 50000) {
-            return alert("Ошибка: Баланс при создании должен быть от 10 до 50 000 ₽");
-        }
-
-        const newClient = {
-            name: name,
-            phone: phone,
-            clientPin: pin,
-            balance: balance,
-            orgType: type,
-            frozen: false,
-            bonuses: 0,
-            creditLimit: 0,
-            history: [{t: "Открытие счета", a: balance}],
-            piggies: []
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3J7KnUgxUHZigwRKmndm7xyxJeeLCrxg",
+            databaseURL: "https://webapp-b7149-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "webapp-b7149",
         };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        dbRef.push(newClient).then(() => {
-            alert("Аккаунт успешно добавлен");
-            document.querySelectorAll('.add-box input').forEach(i => i.value = '');
-        });
-    }
-
-    function renderAdminList() {
-        const query = document.getElementById('adminSearch').value.toLowerCase();
-        const container = document.getElementById('admin-list');
-        container.innerHTML = '';
-
-        const filtered = allClients.filter(c => 
-            c.name.toLowerCase().includes(query) || (c.phone && c.phone.includes(query))
-        );
-
-        filtered.forEach(c => {
-            const isFrozen = c.frozen === true;
-            const isIP = c.orgType === 'ИП';
-            const card = document.createElement('div');
-            card.className = `client-card ${isFrozen ? 'frozen' : ''} ${isIP ? 'is-ip' : ''}`;
-            
-            card.innerHTML = `
-                <div onclick="toggleDetails('${c.fbKey}')">
-                    <div class="card-header">
-                        <div class="info-main">
-                            <strong>${c.name} ${isIP ? '<span class="badge-ip">ИП</span>' : ''}</strong>
-                            <span>Тел: ${c.phone} | ПИН: ${c.clientPin}</span>
+        // 1. Загрузка ЗАЯВОК
+        db.ref('applications').on('value', snap => {
+            const list = document.getElementById('applications-list');
+            list.innerHTML = "";
+            snap.forEach(child => {
+                const app = child.val();
+                list.innerHTML += `
+                    <div class="app-item">
+                        <div>
+                            <span class="badge ${app.orgType === 'ИП' ? 'ip' : 'user'}">${app.orgType}</span>
+                            <b>${app.name}</b> <br>
+                            <small>Тел: ${app.phone} | ПИН: ${app.clientPin} ${app.inn ? '| ИНН: ' + app.inn : ''}</small>
                         </div>
-                        <div style="text-align: right">
-                            <div style="font-weight:800">${(c.balance || 0).toLocaleString()} ₽</div>
-                            <small style="color:${isFrozen ? 'red' : 'green'}">${isFrozen ? 'ЗАБЛОКИРОВАН' : 'АКТИВЕН'}</small>
+                        <div class="btn-group">
+                            <button class="btn accept" onclick="approveApp('${child.key}')">Принять</button>
+                            <button class="btn decline" onclick="deleteApp('${child.key}')">Отклонить</button>
                         </div>
                     </div>
-                </div>
-
-                <div class="details" id="det-${c.fbKey}">
-                    <div class="details-grid">
-                        <div class="stat-box">
-                            <label>Финансы (Изменение баланса заблокировано)</label>
-                            <input type="number" id="bal-${c.fbKey}" value="${c.balance}" disabled>
-                            <label style="margin-top:10px; display:block">Бонусы</label>
-                            <input type="number" id="bon-${c.fbKey}" value="${c.bonuses || 0}">
-                            <button class="btn btn-save" onclick="saveClient('${c.fbKey}')">Сохранить</button>
-                        </div>
-
-                        <div class="stat-box">
-                            <label>Накопления</label>
-                            <div class="history-mini">
-                                ${c.piggies ? c.piggies.map(p => `<div>${p.target}₽ (${p.current}₽)</div>`).join('') : 'Копилок нет'}
-                            </div>
-                            <label style="margin-top:10px; display:block">Кредит лимит</label>
-                            <input type="number" id="cred-${c.fbKey}" value="${c.creditLimit || 0}">
-                        </div>
-
-                        <div class="stat-box">
-                            <label>Последние действия</label>
-                            <div class="history-mini">
-                                ${c.history ? c.history.slice(-5).reverse().map(h => `<div>${h.t}: <b>${h.a}₽</b></div>`).join('') : 'Пусто'}
-                            </div>
-                            <div class="actions">
-                                <button class="btn ${isFrozen ? 'btn-unfreeze' : 'btn-freeze'}" onclick="toggleFreeze('${c.fbKey}', ${isFrozen})">
-                                    ${isFrozen ? 'Разблокировать' : 'Заблокировать'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
+                `;
+            });
+            if (!list.innerHTML) list.innerHTML = "<p style='color:#888'>Новых заявок нет</p>";
         });
-    }
 
-    function toggleDetails(key) {
-        const el = document.getElementById(`det-${key}`);
-        const isVisible = el.style.display === 'block';
-        document.querySelectorAll('.details').forEach(d => d.style.display = 'none');
-        el.style.display = isVisible ? 'none' : 'block';
-    }
-
-    function saveClient(key) {
-        // Баланс больше не отправляем в update, так как он заблокирован для редактирования
-        firebase.database().ref('clients/' + key).update({
-            bonuses: Number(document.getElementById(`bon-${key}`).value),
-            creditLimit: Number(document.getElementById(`cred-${key}`).value)
-        }).then(() => alert('Данные (бонусы и лимит) успешно обновлены'));
-    }
-
-    function toggleFreeze(key, status) {
-        if(confirm(status ? "Разблокировать?" : "Заблокировать карту клиента?")) {
-            firebase.database().ref('clients/' + key).update({ frozen: !status });
+        // 2. Одобрение заявки
+        function approveApp(key) {
+            db.ref('applications/' + key).once('value', snap => {
+                const data = snap.val();
+                db.ref('clients').push(data).then(() => {
+                    db.ref('applications/' + key).remove();
+                });
+            });
         }
-    }
-</script>
 
+        function deleteApp(key) { if(confirm("Удалить заявку?")) db.ref('applications/' + key).remove(); }
+
+        // 3. Управление КЛИЕНТАМИ
+        db.ref('clients').on('value', snap => {
+            const list = document.getElementById('clients-list');
+            list.innerHTML = "";
+            snap.forEach(child => {
+                const u = child.val();
+                const key = child.key;
+                list.innerHTML += `
+                    <div class="user-row">
+                        <span><b>${u.name}</b><br><small>${u.phone}</small></span>
+                        <span>
+                            <input type="number" value="${u.bonuses || 0}" onchange="updateVal('${key}', 'bonuses', this.value)">
+                        </span>
+                        <span>
+                            <input type="number" value="${u.creditLimit || 0}" onchange="updateVal('${key}', 'creditLimit', this.value)">
+                        </span>
+                        <span style="display:flex; gap:5px; align-items:center;">
+                            <button class="btn" style="background:${u.frozen ? '#ffcc00' : '#e5e5ea'}" onclick="toggleFreeze('${key}', ${u.frozen})">
+                                ${u.frozen ? 'Разблокировать' : 'Заблокировать'}
+                            </button>
+                            <button class="btn" onclick="viewDetails('${key}')">👁️ Инфо</button>
+                        </span>
+                    </div>
+                `;
+            });
+        });
+
+        function updateVal(key, field, val) {
+            db.ref('clients/' + key).update({ [field]: Number(val) });
+        }
+
+        function toggleFreeze(key, currentStatus) {
+            db.ref('clients/' + key).update({ frozen: !currentStatus });
+        }
+
+        function viewDetails(key) {
+            db.ref('clients/' + key).once('value', snap => {
+                const u = snap.val();
+                alert(`Копилки: ${JSON.stringify(u.piggies || 'Пусто')}\nИстория: ${u.history ? u.history.length : 0} операций`);
+            });
+        }
+    </script>
 </body>
 </html>
