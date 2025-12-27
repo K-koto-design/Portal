@@ -2,237 +2,34 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>MAX Staff — Admin</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAX STAFF - Система Рапортов</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
-        :root {
-            --system-bg: #f2f2f7;
-            --card-bg: rgba(255, 255, 255, 0.8);
-            --accent: #007aff;
-            --green: #34c759;
-            --red: #ff3b30;
-            --text: #000000;
-            --text-secondary: #8e8e93;
-        }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--system-bg);
-            color: var(--text);
-            margin: 0;
-            padding-bottom: 80px;
-        }
-
-        .sidebar {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            padding: 15px 20px;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .main-content { padding: 16px; max-width: 800px; margin: 0 auto; }
-
-        h1 { font-size: 22px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
-        h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-
-        .base-filters {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-        .filter-btn {
-            flex: 1;
-            padding: 8px;
-            border-radius: 10px;
-            border: none;
-            background: #e5e5ea;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-        }
-        .filter-btn.active {
-            background: var(--accent);
-            color: white;
-        }
-
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-
-        .app-item, .user-row {
-            background: #fff;
-            border-radius: 15px;
-            padding: 16px;
-            margin-bottom: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .user-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        
-        .inputs-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 10px; 
-            background: var(--system-bg);
-            padding: 10px;
-            border-radius: 12px;
-        }
-
-        .input-group label { font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 4px; text-transform: uppercase; }
-        
-        input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid rgba(0,0,0,0.1);
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 600;
-            background: #fff;
-        }
-
-        .history-box {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px dashed #ccc;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            padding: 4px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .history-item.plus { color: var(--green); }
-        .history-item.minus { color: var(--red); }
-
-        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn {
-            flex: 1;
-            min-width: 100px;
-            padding: 12px;
-            border-radius: 12px;
-            border: none;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .btn.accept { background: var(--green); color: white; }
-        .btn.decline { background: var(--red); color: white; }
-        .btn.secondary { background: var(--accent); color: white; }
-        .btn.outline { background: #e5e5ea; color: #333; }
-        .btn.delete-user { background: #fdf2f2; color: var(--red); border: 1px solid #ffcfce; }
-
-        .badge {
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-        }
-        .badge.ip { background: #000; color: #fff; }
-        .badge.user { background: #007aff; color: #fff; }
-
-        .tab-bar {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            height: 70px;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            border-top: 1px solid rgba(0,0,0,0.1);
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-
-        .tab-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: var(--text-secondary);
-            font-size: 10px;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .tab-item.active { color: var(--accent); }
-        .tab-icon { font-size: 22px; margin-bottom: 4px; }
-
-        .hidden { display: none !important; }
-
-        @media (min-width: 768px) {
-            .user-row { flex-direction: column; }
-            .inputs-grid { display: grid; }
-        }
+        :root { --bg: #0a0a0a; --card: #1c1c1e; --blue: #0077ff; --text: #fff; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
+        .client-card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid var(--blue); }
+        .report-btn { background: var(--blue); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
+        #report-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); padding: 20px; z-index: 1000; }
+        .modal-content { background: var(--card); padding: 20px; border-radius: 15px; max-width: 400px; margin: 50px auto; }
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #2c2c2e; color: white; box-sizing: border-box; }
     </style>
 </head>
 <body>
+    <h2>👨‍💻 Панель Сотрудника</h2>
+    <div id="clients-list">Поиск активных сессий...</div>
 
-    <div class="sidebar">
-        <h1 style="color: var(--accent);">MAX Staff</h1>
-        <div id="status-dot" style="width: 10px; height: 10px; background: var(--green); border-radius: 50%;"></div>
+    <div id="report-modal">
+        <div class="modal-content">
+            <h3>📝 Создать рапорт</h3>
+            <input type="text" id="staff-name" placeholder="Ваше имя">
+            <input type="text" id="target-client" readonly>
+            <textarea id="report-desc" rows="4" placeholder="Что нужно сделать? (Напр: Начислить 1000р за пополнение)"></textarea>
+            <button class="report-btn" onclick="submitReport()">Отправить Владельцу</button>
+            <button onclick="closeReport()" style="background:none; border:none; color:gray; width:100%; margin-top:10px;">Отмена</button>
+        </div>
     </div>
-
-    <div class="main-content">
-        <section id="sec-apps">
-            <h2><span style="font-size: 24px;">🔔</span> Заявки</h2>
-            <div id="applications-list">
-                <div style="text-align: center; color: #8e8e93; padding: 40px;">Загрузка...</div>
-            </div>
-        </section>
-
-        <section id="sec-clients" class="hidden">
-            <h2><span style="font-size: 24px;">👥</span> База</h2>
-            
-            <div class="base-filters">
-                <button class="filter-btn active" onclick="filterBase('Физическое лицо', this)">Клиенты</button>
-                <button class="filter-btn" onclick="filterBase('ИП', this)">ИП</button>
-            </div>
-
-            <div id="clients-list"></div>
-        </section>
-    </div>
-
-    <nav class="tab-bar">
-        <a href="#" class="tab-item active" onclick="showSec('sec-apps', this)">
-            <span class="tab-icon">📥</span>
-            <span>Заявки</span>
-        </a>
-        <a href="#" class="tab-item" onclick="showSec('sec-clients', this)">
-            <span class="tab-icon">👤</span>
-            <span>База</span>
-        </a>
-        <a href="#" class="tab-item" onclick="location.reload()">
-            <span class="tab-icon">🔄</span>
-            <span>Обновить</span>
-        </a>
-    </nav>
 
     <script>
         const firebaseConfig = {
@@ -243,144 +40,48 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let currentFilter = 'Физическое лицо';
-
-        function showSec(id, el) {
-            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-            document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-            document.getElementById(id).classList.remove('hidden');
-            el.classList.add('active');
-            window.scrollTo(0,0);
-        }
-
-        function filterBase(type, btn) {
-            currentFilter = type;
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderClients();
-        }
-
-        db.ref('applications').on('value', snap => {
-            const list = document.getElementById('applications-list');
-            list.innerHTML = "";
-            if (!snap.exists()) {
-                list.innerHTML = "<div class='card' style='text-align:center; color:#8e8e93'>Нет новых заявок</div>";
-                return;
-            }
-            snap.forEach(child => {
-                const app = child.val();
-                list.innerHTML += `
-                    <div class="app-item">
-                        <div class="app-info">
-                            <span class="badge ${app.orgType === 'ИП' ? 'ip' : 'user'}">${app.orgType}</span>
-                            <b>${app.name}</b>
-                            <small>📞 ${app.phone}${app.inn ? '<br>📄 ИНН: ' + app.inn : ''}</small>
-                        </div>
-                        <div class="btn-group">
-                            <button class="btn accept" onclick="approveApp('${child.key}')">Одобрить</button>
-                            <button class="btn decline" onclick="deleteApp('${child.key}')">Удалить</button>
-                        </div>
-                    </div>
-                `;
-            });
-        });
-
-        function approveApp(key) {
-            db.ref('applications/' + key).once('value', snap => {
-                const data = snap.val();
-                db.ref('clients').push(data).then(() => {
-                    db.ref('applications/' + key).remove();
+        function loadClients() {
+            db.ref('clients').on('value', snap => {
+                const list = document.getElementById('clients-list');
+                list.innerHTML = "";
+                if (!snap.exists()) { list.innerHTML = "Клиентов пока нет"; return; }
+                
+                snap.forEach(child => {
+                    const c = child.val();
+                    const card = document.createElement('div');
+                    card.className = 'client-card';
+                    card.innerHTML = `
+                        <b>👤 ${c.name || 'Без имени'}</b><br>
+                        <small>ID: ${child.key}</small><br>
+                        <p>💰 Баланс: ${c.balance || 0} ₽ | 🎁 Бонусы: ${c.bonuses || 0}</p>
+                        <button class="report-btn" onclick="openReport('${child.key}', '${c.name}')">Запросить изменение</button>
+                    `;
+                    list.appendChild(card);
                 });
             });
         }
 
-        function deleteApp(key) { 
-            if(confirm("Удалить заявку?")) db.ref('applications/' + key).remove(); 
+        function openReport(id, name) {
+            document.getElementById('target-client').value = name + " (ID: " + id + ")";
+            window.currentClientId = id;
+            document.getElementById('report-modal').style.display = 'block';
         }
 
-        let allClients = {};
-        db.ref('clients').on('value', snap => {
-            allClients = snap.val() || {};
-            renderClients();
-        });
+        function closeReport() { document.getElementById('report-modal').style.display = 'none'; }
 
-        function renderClients() {
-            const list = document.getElementById('clients-list');
-            list.innerHTML = "";
-            
-            Object.keys(allClients).forEach(key => {
-                const u = allClients[key];
-                if (u.orgType !== currentFilter) return;
+        async function submitReport() {
+            const staff = document.getElementById('staff-name').value;
+            const desc = document.getElementById('report-desc').value;
+            if(!staff || !desc) return alert("Заполните форму!");
 
-                list.innerHTML += `
-                    <div class="user-row">
-                        <div class="user-header">
-                            <div>
-                                <b>${u.name}</b>
-                                <small style="display:block; color:var(--text-secondary)">${u.phone}</small>
-                            </div>
-                            <div style="text-align:right">
-                                <div style="font-weight:bold; color:var(--accent)">${(u.balance || 0).toLocaleString()} ₽</div>
-                            </div>
-                        </div>
-                        
-                        <div class="inputs-grid">
-                            <div class="input-group">
-                                <label>Бонусы</label>
-                                <input type="number" value="${u.bonuses || 0}" onchange="updateVal('${key}', 'bonuses', this.value)">
-                            </div>
-                            <div class="input-group">
-                                <label>Кред. лимит</label>
-                                <input type="number" value="${u.creditLimit || 0}" onchange="updateVal('${key}', 'creditLimit', this.value)">
-                            </div>
-                        </div>
-
-                        <div class="btn-group">
-                            <button class="btn ${u.frozen ? 'accept' : 'outline'}" onclick="toggleFreeze('${key}', ${u.frozen})">
-                                ${u.frozen ? '🔓 Разблок.' : '🔒 Блок'}
-                            </button>
-                            <button class="btn secondary" onclick="toggleHistory('${key}')">📊 Инфо</button>
-                            <button class="btn delete-user" onclick="deleteClient('${key}', '${u.name}')">🗑 Удалить</button>
-                        </div>
-
-                        <div id="history-${key}" class="history-box hidden">
-                            <div style="font-size:11px; font-weight:bold; margin-bottom:5px">ИСТОРИЯ ОПЕРАЦИЙ:</div>
-                            ${renderHistory(u.history)}
-                        </div>
-                    </div>
-                `;
+            await db.ref('reports').push({
+                staff, client: document.getElementById('target-client').value,
+                desc, time: new Date().toLocaleString()
             });
+            alert("Рапорт отправлен!");
+            closeReport();
         }
-
-        function renderHistory(history) {
-            if (!history) return "<div style='font-size:12px; color:#8e8e93'>Нет операций</div>";
-            const historyArr = Array.isArray(history) ? history : Object.values(history);
-            return historyArr.reverse().map(h => `
-                <div class="history-item ${h.type === 'plus' ? 'plus' : 'minus'}">
-                    <span>${h.date || ''} ${h.title || (h.type === 'plus' ? 'Пополнение' : 'Покупка')}</span>
-                    <b>${h.type === 'plus' ? '+' : '-'}${h.amount} ₽</b>
-                </div>
-            `).join('');
-        }
-
-        function toggleHistory(key) {
-            const el = document.getElementById(`history-${key}`);
-            el.classList.toggle('hidden');
-        }
-
-        function updateVal(key, field, val) {
-            db.ref('clients/' + key).update({ [field]: Number(val) });
-        }
-
-        function toggleFreeze(key, currentStatus) {
-            db.ref('clients/' + key).update({ frozen: !currentStatus });
-        }
-
-        function deleteClient(key, name) {
-            if(confirm(`Вы действительно хотите удалить клиента ${name} из базы навсегда?`)) {
-                db.ref('clients/' + key).remove();
-            }
-        }
+        loadClients();
     </script>
 </body>
 </html>
